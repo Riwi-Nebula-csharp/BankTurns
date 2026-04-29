@@ -1,11 +1,10 @@
 ﻿using BankTurns.Models;
 using BankTurns.Response;
 
-namespace BankTurns.Interfaces
+namespace BankTurns.Interfaces;
+
+public interface IUserService
 {
-    public interface IUserService
-    {
-        Task<ServicesResponse<User?>> CreateAsync(string document, string name, string reason);
-        Task<ServicesResponse<User?>> GetByDocumentAsync(string document);
-    }
+    Task<ServicesResponse<User?>> CreateAsync(string document, string name);
+  
 }
