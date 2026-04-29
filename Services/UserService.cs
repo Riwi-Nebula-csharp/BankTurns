@@ -1,53 +1,83 @@
 ﻿using BankTurns.Data;
-using BankTurns.Response;
 using BankTurns.Interfaces;
 using BankTurns.Models;
+using BankTurns.Response;
 using Microsoft.EntityFrameworkCore;
 
-namespace BankTurns.Services 
+namespace BankTurns.Services
 {
-    public class  UserService : IUserService
+    public class UserService : IUserService
     {
-        private AppDbContext _dbContext;
-        private IUserService _userServiceImplementation;
+        private readonly AppDbContext _context;
 
-        public UserService(AppDbContext dbContext)
+        public UserService(AppDbContext context)
         {
-            _dbContext = dbContext;
+            _context = context;
         }
-
-         public async Task<ServicesResponse<User>>   CreateAsync(string document, string name)
+        
+        public async Task<ServicesResponse<User?>> CreateAsync(string document, string name, string reason)
         {
-            var User  = await _dbContext.Users.FirstOrDefaultAsync(u => u.Document == document);
+            var response = new ServicesResponse<User?>();
 
-            if (User == null)
+            if (string.IsNullOrWhiteSpace(document) ||
+                string.IsNullOrWhiteSpace(name)     ||
+                string.IsNullOrWhiteSpace(reason))
             {
-                User = new User()
-                {
-                    Name = name,
-                    Document = document,
-                    Reason = string.Empty
-                };
-                _dbContext.AddAsync(User);
-               await _dbContext.SaveChangesAsync();
-               return new ServicesResponse<User>()
-               {
-                   Status = true,
-                   Message = $"User {name} was created successfully.",
-                   Data = User
-               };
+                response.Status  = false;
+                response.Message = "Document,name and reason are required";
+                return response;
             }
 
-            return new ServicesResponse<User>()
+            var existing = await _context.Users
+                .FirstOrDefaultAsync(u => u.Document == document);
+
+            if (existing != null)
             {
-                Status = false,
-                Message = $"The user {name} is already registered ",
-                Data = User
+                existing.Name   = name;
+                existing.Reason = reason;
+                await _context.SaveChangesAsync();
+
+                response.Status  = true;
+                response.Message = $"Welcome {name}.";
+                response.Data    = existing;
+                return response;
+            }
+
+            var user = new User
+            {
+                Document  = document,
+                Name      = name,
+                Reason    = reason,
+                CreatedAt = DateTime.Now
             };
 
+            _context.Users.Add(user);
+            await _context.SaveChangesAsync();
 
+            response.Status  = true;
+            response.Message = $"User {name} register successfully.";
+            response.Data    = user;
+            return response;
         }
 
-     
+        public async Task<ServicesResponse<User?>> GetByDocumentAsync(string document)
+        {
+            var response = new ServicesResponse<User?>();
+
+            var user = await _context.Users
+                .FirstOrDefaultAsync(u => u.Document == document);
+
+            if (user == null)
+            {
+                response.Status  = false;
+                response.Message = "User no found";
+                return response;
+            }
+
+            response.Status  = true;
+            response.Message = "User found.";
+            response.Data    = user;
+            return response;
+        }
     }
 }
