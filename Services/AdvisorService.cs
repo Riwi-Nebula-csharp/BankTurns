@@ -10,7 +10,7 @@ namespace BankTurns.Services
     {
         private readonly AppDbContext _context;
 
-        public AdvisorService(AppDbContext contextadd 
+        public AdvisorService(AppDbContext context)
         {
             _context = context;
         }
