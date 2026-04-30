@@ -1,0 +1,286 @@
+@{
+    ViewData["Title"] = "Solicitar Turno";
+    ViewData["FullScreen"] = true;
+}
+
+<style>
+    .kiosk-page {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        z-index: 1;
+        padding: 20px;
+    }
+</style>
+
+<div class="kiosk-page">
+    <div class="kiosk-container">
+
+        <!-- Logo & Header -->
+        <div class="kiosk-logo">
+            <div class="bank-icon">🏦</div>
+            <h1 style="font-size:2rem;margin-bottom:6px;">
+                <span class="gradient-text">BankTurns</span>
+            </h1>
+            <p class="text-secondary-custom">Bienvenido — Solicita tu turno de atención</p>
+        </div>
+
+        <!-- Step indicator -->
+        <div class="step-indicator" id="step-indicator">
+            <div class="step-dot active" id="dot-1"></div>
+            <div class="step-dot" id="dot-2"></div>
+            <div class="step-dot" id="dot-3"></div>
+        </div>
+
+        <!-- STEP 1: Enter document -->
+        <div id="step-1" class="glass-card" style="padding:32px;">
+            <h2 style="font-size:1.3rem;margin-bottom:6px;">Identificación</h2>
+            <p class="text-secondary-custom" style="font-size:0.9rem;margin-bottom:24px;">Ingresa tu número de documento para continuar.</p>
+
+            <div class="form-section">
+                <div class="field-group">
+                    <label class="field-label" for="doc-input">Número de documento</label>
+                    <input id="doc-input" class="field-input" type="text" placeholder="Ej: 1001234567" autocomplete="off" maxlength="20" />
+                </div>
+                <button class="btn-gold btn-full" id="btn-check-doc">
+                    Continuar <span>→</span>
+                </button>
+            </div>
+
+            <div class="divider"></div>
+            <p class="text-muted-custom" style="font-size:0.82rem;text-align:center;">
+                📺 ¿Ya tienes un ticket? Espera en la <a href="/WaitingRoom" style="color:var(--gold);text-decoration:none;">Sala de Espera</a>
+            </p>
+        </div>
+
+        <!-- STEP 2: Register (hidden) -->
+        <div id="step-2" class="glass-card" style="padding:32px;display:none;">
+            <button class="btn-ghost" id="btn-back-1" style="margin-bottom:16px;padding:6px 12px;font-size:0.8rem;">← Volver</button>
+            <h2 style="font-size:1.3rem;margin-bottom:6px;">Registro de Usuario</h2>
+            <p class="text-secondary-custom" style="font-size:0.9rem;margin-bottom:24px;">No encontramos tu documento. Completa tus datos para continuar.</p>
+
+            <div class="form-section">
+                <div class="field-group">
+                    <label class="field-label">Documento</label>
+                    <input id="reg-doc" class="field-input" type="text" readonly style="opacity:0.6;" />
+                </div>
+                <div class="field-group">
+                    <label class="field-label" for="reg-name">Nombre completo</label>
+                    <input id="reg-name" class="field-input" type="text" placeholder="Tu nombre" />
+                </div>
+                <div class="field-group">
+                    <label class="field-label" for="reg-reason">Motivo de visita</label>
+                    <input id="reg-reason" class="field-input" type="text" placeholder="Ej: Apertura de cuenta, consulta de saldo..." />
+                </div>
+                <button class="btn-gold btn-full" id="btn-register">
+                    Registrarme y tomar turno
+                </button>
+            </div>
+        </div>
+
+        <!-- STEP 3: Ticket (hidden) -->
+        <div id="step-3" style="display:none;">
+            <div class="ticket-card">
+                <p style="font-size:0.8rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-muted);margin-bottom:8px;">🏦 Banco BankTurns</p>
+                <div class="ticket-perforations">
+                    <span></span><span></span><span></span><span></span><span></span>
+                    <span></span><span></span><span></span><span></span><span></span>
+                </div>
+                <p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:4px;">Tu número de turno</p>
+                <div class="turn-number" id="ticket-number">A-01</div>
+                <div class="ticket-perforations" style="margin-top:12px;">
+                    <span></span><span></span><span></span><span></span><span></span>
+                    <span></span><span></span><span></span><span></span><span></span>
+                </div>
+                <div style="margin-top:16px;">
+                    <p id="ticket-name" style="font-size:1rem;font-weight:600;color:var(--text-primary);"></p>
+                    <p id="ticket-reason" style="font-size:0.85rem;color:var(--text-secondary);margin-top:4px;"></p>
+                </div>
+                <div style="margin-top:16px;padding:12px;background:rgba(212,168,75,0.08);border-radius:var(--radius-sm);">
+                    <p style="font-size:0.8rem;color:var(--text-secondary);">
+                        📺 Dirígete a la <strong style="color:var(--gold);">Sala de Espera</strong> y espera ser llamado por un asesor.
+                    </p>
+                </div>
+                <p id="ticket-time" style="font-size:0.75rem;color:var(--text-muted);margin-top:12px;"></p>
+            </div>
+
+            <div style="display:flex;gap:12px;margin-top:20px;">
+                <a href="/WaitingRoom" class="btn-blue" style="flex:1;justify-content:center;text-decoration:none;">
+                    📺 Ver Sala de Espera
+                </a>
+                <button class="btn-ghost" id="btn-new-turn" style="flex:1;">
+                    + Nuevo Turno
+                </button>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+@section Scripts {
+<script>
+(function () {
+    let currentUserId = null;
+
+    const step1 = document.getElementById('step-1');
+    const step2 = document.getElementById('step-2');
+    const step3 = document.getElementById('step-3');
+    const dots  = [document.getElementById('dot-1'), document.getElementById('dot-2'), document.getElementById('dot-3')];
+
+    function goStep(n) {
+        step1.style.display = n === 1 ? '' : 'none';
+        step2.style.display = n === 2 ? '' : 'none';
+        step3.style.display = n === 3 ? '' : 'none';
+        dots.forEach((d, i) => { d.classList.toggle('active', i < n); });
+    }
+
+    // ── Step 1: Check document ──
+    document.getElementById('btn-check-doc').addEventListener('click', async () => {
+        const doc = document.getElementById('doc-input').value.trim();
+        if (!doc) { showToast('Por favor ingresa tu documento.', 'error'); return; }
+
+        const btn = document.getElementById('btn-check-doc');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner"></span> Consultando...';
+
+        try {
+            // 1. Check if user exists
+            const res = await fetch(`/api/Users/${encodeURIComponent(doc)}`);
+            if (res.ok) {
+                const data = await res.json();
+                currentUserId = data.data.id;
+                // User exists → check for active turn
+                const hasActive = await fetch(`/api/Turns/active/${currentUserId}`);
+                if (hasActive.ok) {
+                    const ta = await hasActive.json();
+                    // Show ticket directly
+                    showTicket(ta.data, data.data);
+                    goStep(3);
+                } else {
+                    // Create new turn
+                    await createTurn(data.data);
+                }
+            } else if (res.status === 404) {
+                // User not found → go to register
+                document.getElementById('reg-doc').value = doc;
+                goStep(2);
+            } else {
+                showToast('Error consultando el documento.', 'error');
+            }
+        } catch (e) {
+            showToast('Error de conexión con el servidor.', 'error');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = 'Continuar <span>→</span>';
+        }
+    });
+
+    // ── Step 2: Register ──
+    document.getElementById('btn-back-1').addEventListener('click', () => goStep(1));
+
+    document.getElementById('btn-register').addEventListener('click', async () => {
+        const doc    = document.getElementById('reg-doc').value.trim();
+        const name   = document.getElementById('reg-name').value.trim();
+        const reason = document.getElementById('reg-reason').value.trim();
+        if (!name)   { showToast('Ingresa tu nombre.', 'error'); return; }
+        if (!reason) { showToast('Ingresa el motivo de la visita.', 'error'); return; }
+
+        const btn = document.getElementById('btn-register');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner"></span> Registrando...';
+
+        try {
+            const res = await fetch('/api/Users', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ document: doc, name, reason })
+            });
+            const data = await res.json();
+            if (res.ok) {
+                currentUserId = data.data.id;
+                await createTurn(data.data);
+            } else {
+                showToast(data.message || 'Error al registrar usuario.', 'error');
+            }
+        } catch (e) {
+            showToast('Error de conexión.', 'error');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = 'Registrarme y tomar turno';
+        }
+    });
+
+    // ── Create Turn ──
+    async function createTurn(user) {
+        try {
+            const res = await fetch(`/api/Turns?userId=${user.id}`, { method: 'POST' });
+            const data = await res.json();
+            if (res.ok) {
+                showTicket(data.data, user);
+                goStep(3);
+                showToast('¡Turno asignado exitosamente!', 'success');
+            } else {
+                showToast(data.message || 'No se pudo generar el turno.', 'error');
+                goStep(1);
+            }
+        } catch (e) {
+            showToast('Error al crear el turno.', 'error');
+            goStep(1);
+        }
+    }
+
+    // ── Populate ticket & Print ──
+    function showTicket(turn, user) {
+        document.getElementById('ticket-number').textContent = turn.ticket || '---';
+        document.getElementById('ticket-name').textContent   = '👤 ' + (user.name || '');
+        document.getElementById('ticket-reason').textContent = '📋 ' + (user.reason || '');
+        const d = new Date(turn.createdAt || Date.now());
+        document.getElementById('ticket-time').textContent   = 'Emitido: ' + d.toLocaleTimeString('es-CO');
+
+        // Call physical printer
+        printTicketToPhysicalPrinter(turn.ticket, user.name, user.reason, d);
+    }
+
+    // ── Physical Printer API ──
+    async function printTicketToPhysicalPrinter(ticketNum, name, reason, dateObj) {
+        const contentToPrint = `
+=========================
+    BANCO BANKTURNS    
+=========================
+Turno: ${ticketNum}
+Cliente: ${name || 'Usuario'}
+Motivo: ${reason || ''}
+Fecha: ${dateObj.toLocaleDateString('es-CO')}
+Hora: ${dateObj.toLocaleTimeString('es-CO')}
+=========================
+¡Gracias por preferirnos!
+        `.trim();
+
+        try {
+            await fetch('http://10.0.11.2:5001/Home/Print', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ content: contentToPrint })
+            });
+            console.log('Ticket enviado a la impresora exitosamente.');
+        } catch (e) {
+            console.error('Error enviando a la impresora local (revisar red Wi-Fi RIWI):', e);
+        }
+    }
+
+    // ── Reset ──
+    document.getElementById('btn-new-turn').addEventListener('click', () => {
+        document.getElementById('doc-input').value = '';
+        currentUserId = null;
+        goStep(1);
+    });
+
+    // Enter key on document input
+    document.getElementById('doc-input').addEventListener('keydown', e => {
+        if (e.key === 'Enter') document.getElementById('btn-check-doc').click();
+    });
+})();
+</script>
+}
