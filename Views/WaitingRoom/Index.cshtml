@@ -1,0 +1,163 @@
+@{
+    ViewData["Title"] = "Sala de Espera";
+    ViewData["FullScreen"] = true;
+}
+
+<div class="wr-layout" style="position:relative;z-index:1;">
+
+    <!-- Left: Video Panel -->
+    <div class="wr-video-panel">
+        <!-- Header bar -->
+        <div style="position:absolute;top:0;left:0;right:0;z-index:10;padding:18px 24px;display:flex;align-items:center;justify-content:space-between;background:linear-gradient(180deg,rgba(5,13,26,0.9),transparent);">
+            <div style="display:flex;align-items:center;gap:12px;">
+                <div class="bank-icon" style="width:40px;height:40px;font-size:1.2rem;">🏦</div>
+                <div>
+                    <div style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:1.1rem;color:var(--gold-light);">BankTurns</div>
+                    <div style="font-size:0.75rem;color:var(--text-secondary);">Sala de Espera</div>
+                </div>
+            </div>
+            <div class="clock" id="clock-display">00:00:00</div>
+        </div>
+
+        <!-- YouTube embed — replace VIDEO_ID for actual content -->
+        <iframe
+            src="https://www.youtube.com/embed/videoseries?list=PLQ1k7bCKJ7QfNXRuLAWPDyS2A3fZW18L2&autoplay=1&mute=1&loop=1&controls=0&rel=0&showinfo=0"
+            allow="autoplay; encrypted-media"
+            allowfullscreen
+            style="width:100%;height:100%;min-height:calc(100vh - 48px);border:none;">
+        </iframe>
+    </div>
+
+    <!-- Right: Queue Sidebar -->
+    <div class="wr-sidebar" style="position:relative;z-index:1;padding:24px 0;">
+
+        <!-- Currently being served -->
+        <div class="current-turn-display">
+            <p style="font-size:0.78rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-secondary);margin-bottom:10px;">⚡ Turno en Atención</p>
+            <div class="pulse-ring">
+                <div class="turn-number" id="current-ticket">—</div>
+            </div>
+            <p id="current-name" style="margin-top:12px;font-size:1rem;font-weight:600;color:var(--text-primary);"></p>
+            <p id="current-window" style="margin-top:4px;font-size:0.85rem;color:var(--text-secondary);"></p>
+        </div>
+
+        <!-- Queue list -->
+        <div class="glass-card" style="padding:20px;flex:1;overflow:hidden;display:flex;flex-direction:column;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+                <h2 style="font-size:1rem;font-weight:600;">En Cola de Espera</h2>
+                <span id="queue-count" class="badge badge-pending">0 esperando</span>
+            </div>
+            <div class="queue-list" id="queue-list" style="overflow-y:auto;flex:1;">
+                <div class="queue-empty">
+                    <p style="font-size:2rem;margin-bottom:8px;">☕</p>
+                    <p>Sin turnos en espera</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer nav -->
+        <div style="display:flex;gap:10px;padding:0 0 8px;">
+            <a href="/Kiosk" class="btn-gold" style="flex:1;justify-content:center;text-decoration:none;font-size:0.88rem;padding:12px;">
+                🎫 Tomar Turno
+            </a>
+            <a href="/AdvisorPanel" class="btn-ghost" style="flex:1;justify-content:center;text-decoration:none;font-size:0.88rem;">
+                👤 Asesor
+            </a>
+        </div>
+
+    </div>
+</div>
+
+@section Scripts {
+<script>
+(function () {
+    // ── Clock ──
+    function updateClock() {
+        document.getElementById('clock-display').textContent =
+            new Date().toLocaleTimeString('es-CO');
+    }
+    updateClock();
+    setInterval(updateClock, 1000);
+
+    // ── TTS ──
+    let lastCalledTicket = null;
+
+    function speak(text) {
+        if (!window.speechSynthesis) return;
+        const u = new SpeechSynthesisUtterance(text);
+        u.lang = 'es-CO';
+        u.rate = 0.92;
+        u.pitch = 1.05;
+        window.speechSynthesis.cancel();
+        window.speechSynthesis.speak(u);
+    }
+
+    // ── Render Queue ──
+    function renderQueue(turns) {
+        const list = document.getElementById('queue-list');
+        const count = document.getElementById('queue-count');
+
+        // Filter Pending / InProgress
+        const waiting  = turns.filter(t => t.status === 0); // Pending
+        const inAttn   = turns.find(t => t.status === 1);   // InProgress
+
+        // Current turn
+        const curTicket = document.getElementById('current-ticket');
+        const curName   = document.getElementById('current-name');
+        const curWin    = document.getElementById('current-window');
+
+        if (inAttn) {
+            curTicket.textContent = inAttn.ticket || '—';
+            curName.textContent   = inAttn.user?.name || '';
+            curWin.textContent    = inAttn.advisor ? '🪟 Ventanilla ' + (inAttn.advisorId) : '';
+            // Announce if new
+            if (lastCalledTicket !== inAttn.ticket) {
+                lastCalledTicket = inAttn.ticket;
+                speak(`Turno ${inAttn.ticket}. Por favor, pase a la ventanilla.`);
+            }
+        } else {
+            curTicket.textContent = '—';
+            curName.textContent = '';
+            curWin.textContent  = '';
+        }
+
+        // Queue list
+        count.textContent = `${waiting.length} esperando`;
+
+        if (waiting.length === 0) {
+            list.innerHTML = `
+                <div class="queue-empty">
+                    <p style="font-size:2rem;margin-bottom:8px;">☕</p>
+                    <p>Sin turnos en espera</p>
+                </div>`;
+            return;
+        }
+
+        list.innerHTML = waiting.map((t, i) => `
+            <div class="queue-item">
+                <div class="queue-item-ticket">${t.ticket || '?'}</div>
+                <div class="queue-item-info">
+                    <div class="queue-item-name">${t.user?.name || 'Usuario'}</div>
+                    <div class="queue-item-reason">${t.user?.reason || ''}</div>
+                </div>
+                <span class="badge badge-pending">#${i + 1}</span>
+            </div>
+        `).join('');
+    }
+
+    // ── Poll API every 3 s ──
+    async function poll() {
+        try {
+            const res = await fetch('/api/Turns/queue');
+            if (res.ok) {
+                const data = await res.json();
+                renderQueue(data.data || []);
+            }
+        } catch (_) { /* silent */ }
+    }
+
+    poll();
+    setInterval(poll, 3000);
+})();
+</script>
+}
