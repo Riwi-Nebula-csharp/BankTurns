@@ -1,0 +1,56 @@
+@{
+    ViewData["Title"] = "Motivo de Visita";
+    ViewData["FullScreen"] = true;
+}
+
+<style>
+    .kiosk-page {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        z-index: 1;
+        padding: 20px;
+    }
+</style>
+
+<div class="kiosk-page">
+    <div class="kiosk-container">
+
+        <div class="kiosk-logo">
+            <div class="bank-icon">🏦</div>
+            <h1 style="font-size:2rem;margin-bottom:6px;">
+                <span class="gradient-text">BankTurns</span>
+            </h1>
+            <p class="text-secondary-custom">Bienvenido, @ViewBag.UserName</p>
+        </div>
+
+        @if (TempData["Error"] != null)
+        {
+            <div class="glass-card" style="padding:12px 20px;border-left:3px solid #e74c3c;margin-bottom:16px;">
+                <p style="color:#e74c3c;font-size:0.9rem;">@TempData["Error"]</p>
+            </div>
+        }
+
+        <div class="glass-card" style="padding:32px;">
+            <h2 style="font-size:1.3rem;margin-bottom:6px;">Motivo de Visita</h2>
+            <p class="text-secondary-custom" style="font-size:0.9rem;margin-bottom:24px;">
+                ¿En qué podemos ayudarte hoy?
+            </p>
+
+            <form asp-controller="Kiosk" asp-action="CreateTurn" method="post" class="form-section">
+                <input type="hidden" name="userId" value="@ViewBag.UserId" />
+                <div class="field-group">
+                    <label class="field-label" for="reason">Motivo de visita</label>
+                    <input id="reason" name="reason" class="field-input" type="text"
+                           placeholder="Ej: Apertura de cuenta, consulta de saldo..." required />
+                </div>
+                <button type="submit" class="btn-gold btn-full">
+                    Solicitar Turno 🎫
+                </button>
+            </form>
+        </div>
+
+    </div>
+</div>

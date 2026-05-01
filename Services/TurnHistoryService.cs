@@ -1,4 +1,4 @@
-using BankTurns.Data;
+﻿using BankTurns.Data;
 using BankTurns.Interfaces;
 using BankTurns.Models;
 using Microsoft.EntityFrameworkCore;
@@ -39,6 +39,5 @@ namespace BankTurns.Services
                 .OrderBy(h => h.ChangedAt)
                 .ToListAsync();
         }
-        // jaja
     }
 }

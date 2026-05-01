@@ -1,0 +1,60 @@
+@model BankTurns.Models.TicketDto
+@{
+    ViewData["Title"] = "Tu Turno";
+    ViewData["FullScreen"] = true;
+}
+
+<style>
+    .kiosk-page {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        z-index: 1;
+        padding: 20px;
+    }
+</style>
+
+<div class="kiosk-page">
+    <div class="kiosk-container">
+
+        <div class="ticket-card">
+            <p style="font-size:0.8rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-muted);margin-bottom:8px;">
+                🏦 Banco BankTurns
+            </p>
+            <div class="ticket-perforations">
+                <span></span><span></span><span></span><span></span><span></span>
+                <span></span><span></span><span></span><span></span><span></span>
+            </div>
+            <p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:4px;">Tu número de turno</p>
+            <div class="turn-number">@Model.Ticket</div>
+            <div class="ticket-perforations" style="margin-top:12px;">
+                <span></span><span></span><span></span><span></span><span></span>
+                <span></span><span></span><span></span><span></span><span></span>
+            </div>
+            <div style="margin-top:16px;">
+                <p style="font-size:1rem;font-weight:600;color:var(--text-primary);">👤 @Model.ClientName</p>
+                <p style="font-size:0.85rem;color:var(--text-secondary);margin-top:4px;">📋 @Model.Reason</p>
+            </div>
+            <div style="margin-top:16px;padding:12px;background:rgba(212,168,75,0.08);border-radius:var(--radius-sm);">
+                <p style="font-size:0.8rem;color:var(--text-secondary);">
+                    📺 Dirígete a la <strong style="color:var(--gold);">Sala de Espera</strong> y espera ser llamado por un asesor.
+                </p>
+            </div>
+            <p style="font-size:0.75rem;color:var(--text-muted);margin-top:12px;">
+                Emitido: @Model.IssuedAt.ToString("hh:mm tt")
+            </p>
+        </div>
+
+        <div style="display:flex;gap:12px;margin-top:20px;">
+            <a href="/WaitingRoom" class="btn-blue" style="flex:1;justify-content:center;text-decoration:none;">
+                📺 Ver Sala de Espera
+            </a>
+            <a href="/Kiosk" class="btn-ghost" style="flex:1;text-align:center;">
+                + Nuevo Turno
+            </a>
+        </div>
+
+    </div>
+</div>
