@@ -31,21 +31,79 @@
                 <input type="hidden" name="UserId" value="@ViewBag.UserId" />
                 <div class="field-group">
                     <label class="field-label" for="reason">Motivo de visita</label>
-                    <select id="reason" name="Reason" class="field-input" required>
-                        <option value="" disabled selected>Selecciona un banco</option>
-                        <option value="BancoNacion">Banco Nación</option>
-                        <option value="BancoProvincia">Banco Provincia</option>
-                        <option value="BancoGalicia">Banco Galicia</option>
-                        <option value="BancoSantander">Banco Santander</option>
-                        <option value="BancoHSBC">Banco HSBC</option>
-                        <option value="BancoMacro">Banco Macro</option>
-                        <option value="BancoICBC">Banco ICBC</option>
-                    </select>
+                    <div class="bank-options" role="radiogroup" aria-labelledby="reason">
+                        <label class="bank-option">
+                            <input type="radio" name="Reason" value="BancoNacion" required />
+                            <span>Banco Nación</span>
+                        </label>
+                        <label class="bank-option">
+                            <input type="radio" name="Reason" value="BancoProvincia" />
+                            <span>Banco Provincia</span>
+                        </label>
+                        <label class="bank-option">
+                            <input type="radio" name="Reason" value="BancoGalicia" />
+                            <span>Banco Galicia</span>
+                        </label>
+                        <label class="bank-option">
+                            <input type="radio" name="Reason" value="BancoSantander" />
+                            <span>Banco Santander</span>
+                        </label>
+                        <label class="bank-option">
+                            <input type="radio" name="Reason" value="BancoHSBC" />
+                            <span>Banco HSBC</span>
+                        </label>
+                        <label class="bank-option">
+                            <input type="radio" name="Reason" value="BancoMacro" />
+                            <span>Banco Macro</span>
+                        </label>
+                        <label class="bank-option">
+                            <input type="radio" name="Reason" value="BancoICBC" />
+                            <span>Banco ICBC</span>
+                        </label>
+                    </div>
                 </div>
                 <button type="submit" class="btn-gold btn-full">
                     Solicitar Turno 🎫
                 </button>
             </form>
+            <style>
+                .bank-options {
+                    display: grid;
+                    grid-template-columns: repeat(2, minmax(0, 1fr));
+                    gap: 12px;
+                    margin-top: 12px;
+                }
+                .bank-option {
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    padding: 16px;
+                    border: 1px solid rgba(255,255,255,0.18);
+                    border-radius: 16px;
+                    background: rgba(255,255,255,0.04);
+                    cursor: pointer;
+                    transition: transform 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
+                    color: white;
+                }
+                .bank-option input {
+                    width: 1.2rem;
+                    height: 1.2rem;
+                }
+                .bank-option span {
+                    font-weight: 600;
+                    font-size: 0.95rem;
+                }
+                .bank-option:hover,
+                .bank-option input:focus-visible + span,
+                .bank-option input:checked + span {
+                    border-color: #f5c542;
+                    transform: translateY(-1px);
+                    background: rgba(245,197,66,0.08);
+                }
+                .bank-option input:checked + span {
+                    color: #f5c542;
+                }
+            </style>
         </div>
 
     </div>
