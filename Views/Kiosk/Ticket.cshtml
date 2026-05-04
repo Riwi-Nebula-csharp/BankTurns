@@ -4,49 +4,10 @@
     ViewData["FullScreen"] = true;
 }
 
-<style>
-    /* Estilos específicos para Impresora Térmica XPrinter XP-58 */
-    @@media print {
-        @@page {
-            margin: 0;
-            size: 58mm auto; /* Ancho del rollo XP-58 */
-        }
-        body * {
-            visibility: hidden;
-        }
-        #print-area, #print-area * {
-            visibility: visible;
-        }
-        #print-area {
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 48mm; /* Área imprimible de 58mm es ~48mm */
-            margin: 0;
-            padding: 0;
-            border: none;
-            box-shadow: none;
-            background: white;
-            color: black;
-            font-family: 'Courier New', Courier, monospace; /* Mejor para térmicas */
-        }
-        /* Forzar alto contraste y esconder fondos */
-        .turn-number { 
-            font-size: 2.8rem !important; 
-            color: black !important; 
-            font-weight: 900 !important;
-            margin: 10px 0;
-        }
-        .ticket-card { padding: 0 !important; }
-        .no-print, .btn-blue, .btn-ghost { display: none !important; }
-        p, div, h2 { color: black !important; }
-    }
-</style>
-
 <div class="kiosk-page">
     <div class="kiosk-container">
 
-        <div class="ticket-card" id="print-area" style="padding:32px;">
+        <div class="ticket-card" style="padding:32px;">
             <h2 style="font-size:1.4rem;text-transform:uppercase;text-align:center;margin-bottom:4px;font-weight:800;letter-spacing:1px;">
                 Banco BankTurns
             </h2>
@@ -66,23 +27,22 @@
             <div style="margin-top:16px;text-align:center;">
                 <p style="font-size:0.9rem;font-weight:600;">¡Por favor espera tu llamado en la sala!</p>
             </div>
+
+            <div style="margin-top:16px;padding:12px;background:var(--green-dim);border-radius:var(--radius-sm);border:1px solid #bbf7d0;">
+                <p style="font-size:0.85rem;color:var(--green);text-align:center;font-weight:600;">
+                    🖨️ Tu ticket se ha impreso automáticamente. Recógelo de la impresora.
+                </p>
+            </div>
         </div>
 
-        <div style="display:flex;gap:12px;margin-top:24px;" class="no-print">
-            <button onclick="window.print()" class="btn-blue" style="flex:1;justify-content:center;">
-                🖨️ Imprimir Ticket
-            </button>
+        <div style="display:flex;gap:12px;margin-top:24px;">
+            <a href="/WaitingRoom" class="btn-blue" style="flex:1;justify-content:center;text-decoration:none;">
+                📺 Ir a Sala de Espera
+            </a>
             <a href="/Kiosk" class="btn-ghost" style="flex:1;text-align:center;text-decoration:none;">
                 + Nuevo Turno
-            </a>
-        </div>
-        <div style="margin-top:12px;" class="no-print">
-             <a href="/WaitingRoom" class="btn-ghost" style="width:100%;text-align:center;display:block;text-decoration:none;">
-                📺 Ir a Sala de Espera
             </a>
         </div>
 
     </div>
 </div>
-
-
