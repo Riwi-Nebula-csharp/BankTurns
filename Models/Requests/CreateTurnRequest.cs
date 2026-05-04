@@ -5,5 +5,5 @@ namespace BankTurns.Models.Requests;
 public class CreateTurnRequest
 {
     public int UserId { get; set; }
-    public BankReason Reason { get; set; } = BankReason.BancoNacion;
+    public BankReason Reason { get; set; } = BankReason.AccountManagement;
 }

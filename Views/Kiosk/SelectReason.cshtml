@@ -33,32 +33,28 @@
                     <label class="field-label" for="reason">Motivo de visita</label>
                     <div class="bank-options" role="radiogroup" aria-labelledby="reason">
                         <label class="bank-option">
-                            <input type="radio" name="Reason" value="BancoNacion" required />
-                            <span>Banco Nación</span>
+                            <input type="radio" name="Reason" value="Deposit" required />
+                            <span>Depósito</span>
                         </label>
                         <label class="bank-option">
-                            <input type="radio" name="Reason" value="BancoProvincia" />
-                            <span>Banco Provincia</span>
+                            <input type="radio" name="Reason" value="Withdraw" />
+                            <span>Retiro</span>
                         </label>
                         <label class="bank-option">
-                            <input type="radio" name="Reason" value="BancoGalicia" />
-                            <span>Banco Galicia</span>
+                            <input type="radio" name="Reason" value="AccountManagement" />
+                            <span>Gestión de cuenta</span>
                         </label>
                         <label class="bank-option">
-                            <input type="radio" name="Reason" value="BancoSantander" />
-                            <span>Banco Santander</span>
+                            <input type="radio" name="Reason" value="Documents" />
+                            <span>Documentos</span>
                         </label>
                         <label class="bank-option">
-                            <input type="radio" name="Reason" value="BancoHSBC" />
-                            <span>Banco HSBC</span>
+                            <input type="radio" name="Reason" value="Loan" />
+                            <span>Préstamo</span>
                         </label>
                         <label class="bank-option">
-                            <input type="radio" name="Reason" value="BancoMacro" />
-                            <span>Banco Macro</span>
-                        </label>
-                        <label class="bank-option">
-                            <input type="radio" name="Reason" value="BancoICBC" />
-                            <span>Banco ICBC</span>
+                            <input type="radio" name="Reason" value="Complaints" />
+                            <span>Quejas</span>
                         </label>
                     </div>
                 </div>
@@ -86,10 +82,10 @@
                     color: white;
                 }
                 .bank-option input {
-                    width: 1.2rem;
                     height: 1.2rem;
                 }
                 .bank-option span {
+                    color: red;
                     font-weight: 600;
                     font-size: 0.95rem;
                 }

@@ -3,6 +3,8 @@ using BankTurns.Response;
 using BankTurns.Models;
 using BankTurns.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace BankTurns.Services
 {
@@ -10,11 +12,19 @@ namespace BankTurns.Services
     {
         private readonly AppDbContext _context;
         private readonly ITurnHistoryService _historyService;
+        private readonly IConfiguration _configuration;
+        private readonly ILogger<TurnService> _logger;
 
-        public TurnService(AppDbContext context, ITurnHistoryService historyService)
+        public TurnService(
+            AppDbContext context,
+            ITurnHistoryService historyService,
+            IConfiguration configuration,
+            ILogger<TurnService> logger)
         {
             _context = context;
             _historyService = historyService;
+            _configuration = configuration;
+            _logger = logger;
         }
 
         public async Task<ServicesResponse<Turn>> CreateAsync(int userId, BankReason reason)
@@ -61,6 +71,7 @@ namespace BankTurns.Services
                 TurnStatus.Pending, TurnStatus.Pending, "Turno creado");
 
             await _context.Entry(turn).Reference(t => t.User).LoadAsync();
+            TryPrintTicket(turn);
 
             response.Status  = true;
             response.Message = $"Turn {ticket} created successfully.";
@@ -72,13 +83,12 @@ namespace BankTurns.Services
         {
             return reason switch
             {
-                BankReason.BancoNacion    => "Banco Nación",
-                BankReason.BancoProvincia => "Banco Provincia",
-                BankReason.BancoGalicia   => "Banco Galicia",
-                BankReason.BancoSantander => "Banco Santander",
-                BankReason.BancoHSBC      => "Banco HSBC",
-                BankReason.BancoMacro     => "Banco Macro",
-                BankReason.BancoICBC      => "Banco ICBC",
+                BankReason.AccountManagement    => "Everything related to the management of the account",
+                BankReason.Complaints => "Whenever a customer has a complaint regarding our service",
+                BankReason.Deposit   => "A user wants to deposit money to any account",
+                BankReason.Documents => "All documents a customer may need",
+                BankReason.Loan      => "Whenever a customer is requesting a loan",
+                BankReason.Withdraw     => "When withdrawing money",
                 _                         => reason.ToString()
             };
         }
@@ -301,6 +311,31 @@ namespace BankTurns.Services
             response.Message = "Ticket generated successfully.";
             response.Data    = ticket;
             return response;
+        }
+
+        private void TryPrintTicket(Turn turn)
+        {
+            try
+            {
+                var printerName = _configuration["Printer:Name"] ?? "XP-58";
+                var issuedAt = DateTime.Now;
+                var content =
+                    "BANCO BANKTURNS\n" +
+                    "--------------------------\n" +
+                    $"Fecha: {issuedAt:dd/MM/yyyy}\n" +
+                    $"Hora : {issuedAt:hh:mm tt}\n" +
+                    $"Turno: {turn.Ticket}\n" +
+                    $"Cliente: {turn.User?.Name}\n" +
+                    $"Motivo : {turn.Reason}\n" +
+                    "--------------------------\n" +
+                    "Espere su llamado\n\n\n";
+
+                RawPrinterHelper.SendStringToPrinter(printerName, content);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Could not auto-print ticket for turn {TurnId}", turn.Id);
+            }
         }
     }
 }

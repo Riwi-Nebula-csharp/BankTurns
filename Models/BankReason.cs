@@ -2,11 +2,10 @@ namespace BankTurns.Models;
 
 public enum BankReason
 {
-    BancoNacion,
-    BancoProvincia,
-    BancoGalicia,
-    BancoSantander,
-    BancoHSBC,
-    BancoMacro,
-    BancoICBC
+    Deposit,
+    Withdraw,
+    AccountManagement,
+    Documents,
+    Loan,
+    Complaints
 }
