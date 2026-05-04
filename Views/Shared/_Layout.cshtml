@@ -16,12 +16,12 @@
     @if (ViewData["FullScreen"] is not true)
     {
         <!-- Mini-nav only for non-fullscreen pages -->
-        <nav style="position:fixed;top:0;left:0;right:0;z-index:100;padding:14px 28px;display:flex;align-items:center;justify-content:space-between;background:rgba(5,13,26,0.8);backdrop-filter:blur(12px);border-bottom:1px solid rgba(255,255,255,0.08);">
-            <a asp-controller="Home" asp-action="Index" style="display:flex;align-items:center;gap:10px;text-decoration:none;">
+        <nav class="top-navbar">
+            <a asp-controller="Home" asp-action="Index" class="top-navbar-brand">
                 <div class="bank-icon" style="width:36px;height:36px;font-size:1.1rem;">🏦</div>
-                <span style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:1.1rem;color:var(--gold-light);">BankTurns</span>
+                <span class="top-navbar-brand-text">BankTurns</span>
             </a>
-            <div style="display:flex;gap:12px;">
+            <div class="top-navbar-actions">
                 <a asp-controller="Kiosk" asp-action="Index" class="btn-ghost" style="padding:8px 16px;font-size:0.85rem;text-decoration:none;">🎫 Turno</a>
                 <a asp-controller="WaitingRoom" asp-action="Index" class="btn-ghost" style="padding:8px 16px;font-size:0.85rem;text-decoration:none;">📺 Sala</a>
                 <a asp-controller="AdvisorPanel" asp-action="Index" class="btn-gold" style="padding:8px 18px;font-size:0.85rem;text-decoration:none;">👤 Asesor</a>
@@ -51,3 +51,4 @@
     </script>
 </body>
 </html>
+
