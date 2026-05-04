@@ -17,7 +17,7 @@ namespace BankTurns.Services
             _historyService = historyService;
         }
 
-        public async Task<ServicesResponse<Turn>> CreateAsync(int userId, string reason)
+        public async Task<ServicesResponse<Turn>> CreateAsync(int userId, BankReason reason)
         {
             var response = new ServicesResponse<Turn>();
 
@@ -49,7 +49,7 @@ namespace BankTurns.Services
             {
                 UserId    = userId,
                 Ticket    = ticket,
-                Reason    = reason,
+                Reason    = GetBankReasonText(reason),
                 Status    = TurnStatus.Pending,
                 CreatedAt = DateTime.Now
             };
@@ -66,6 +66,21 @@ namespace BankTurns.Services
             response.Message = $"Turn {ticket} created successfully.";
             response.Data    = turn;
             return response;
+        }
+
+        private static string GetBankReasonText(BankReason reason)
+        {
+            return reason switch
+            {
+                BankReason.BancoNacion    => "Banco Nación",
+                BankReason.BancoProvincia => "Banco Provincia",
+                BankReason.BancoGalicia   => "Banco Galicia",
+                BankReason.BancoSantander => "Banco Santander",
+                BankReason.BancoHSBC      => "Banco HSBC",
+                BankReason.BancoMacro     => "Banco Macro",
+                BankReason.BancoICBC      => "Banco ICBC",
+                _                         => reason.ToString()
+            };
         }
 
         public async Task<ServicesResponse<List<Turn>>> GetQueueAsync()

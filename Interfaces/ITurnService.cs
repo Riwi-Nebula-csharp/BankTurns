@@ -5,7 +5,7 @@ namespace BankTurns.Interfaces
 {
     public interface ITurnService
     {
-        Task<ServicesResponse<Turn>>       CreateAsync(int userId, string reason);
+        Task<ServicesResponse<Turn>>       CreateAsync(int userId, BankReason reason);
         Task<ServicesResponse<List<Turn>>> GetQueueAsync();
         Task<ServicesResponse<Turn>>       CallNextAsync(int advisorId);
         Task<ServicesResponse<Turn>>       FinishTurnAsync(int advisorId, string? comment);

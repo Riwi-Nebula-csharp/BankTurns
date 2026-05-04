@@ -28,11 +28,19 @@
             </p>
 
             <form asp-controller="Kiosk" asp-action="CreateTurn" method="post" class="form-section">
-                <input type="hidden" name="userId" value="@ViewBag.UserId" />
+                <input type="hidden" name="UserId" value="@ViewBag.UserId" />
                 <div class="field-group">
                     <label class="field-label" for="reason">Motivo de visita</label>
-                    <input id="reason" name="reason" class="field-input" type="text"
-                           placeholder="Ej: Apertura de cuenta, consulta de saldo..." required />
+                    <select id="reason" name="Reason" class="field-input" required>
+                        <option value="" disabled selected>Selecciona un banco</option>
+                        <option value="BancoNacion">Banco Nación</option>
+                        <option value="BancoProvincia">Banco Provincia</option>
+                        <option value="BancoGalicia">Banco Galicia</option>
+                        <option value="BancoSantander">Banco Santander</option>
+                        <option value="BancoHSBC">Banco HSBC</option>
+                        <option value="BancoMacro">Banco Macro</option>
+                        <option value="BancoICBC">Banco ICBC</option>
+                    </select>
                 </div>
                 <button type="submit" class="btn-gold btn-full">
                     Solicitar Turno 🎫

@@ -1,4 +1,5 @@
 using BankTurns.Interfaces;
+using BankTurns.Models;
 using BankTurns.Models.Requests;
 using Microsoft.AspNetCore.Mvc;
 
@@ -102,21 +103,21 @@ public class KioskController : Controller
 
     // POST /Kiosk/CreateTurn — crea el turno con reason
     [HttpPost]
-    public async Task<IActionResult> CreateTurn(int userId, string reason)
+    public async Task<IActionResult> CreateTurn(CreateTurnRequest request)
     {
-        if (string.IsNullOrWhiteSpace(reason))
+        if (request.UserId <= 0 || !Enum.IsDefined(typeof(BankReason), request.Reason))
         {
             TempData["Error"]    = "El motivo de visita es requerido.";
-            TempData["UserId"]   = userId;
+            TempData["UserId"]   = request.UserId;
             return RedirectToAction(nameof(SelectReason));
         }
 
-        var response = await _turnService.CreateAsync(userId, reason);
+        var response = await _turnService.CreateAsync(request.UserId, request.Reason);
 
         if (!response.Status || response.Data == null)
         {
             TempData["Error"]  = response.Message;
-            TempData["UserId"] = userId;
+            TempData["UserId"] = request.UserId;
             return RedirectToAction(nameof(SelectReason));
         }
 
