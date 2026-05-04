@@ -1,30 +1,38 @@
+@using BankTurns.Models
 @{
     ViewData["Title"] = "Panel del Asesor";
     ViewData["FullScreen"] = true;
+
+    var advisorId   = ViewBag.AdvisorId   as int?;
+    var advisorName = ViewBag.AdvisorName as string ?? "Asesor";
+    var queue       = ViewBag.Queue       as List<Turn> ?? new();
+    var advisorTurns = ViewBag.AdvisorTurns as List<Turn> ?? new();
+    var activeTurn  = ViewBag.ActiveTurn  as Turn;
+
+    var pending    = queue.Where(t => t.Status == TurnStatus.Pending).OrderBy(t => t.CreatedAt).ToList();
+    var inProgress = queue.Where(t => t.Status == TurnStatus.InProgress).ToList();
+    var finished   = advisorTurns.Where(t => t.Status == TurnStatus.Finished).OrderByDescending(t => t.FinishedAt).ToList();
 }
 
 <div class="advisor-layout" style="position:relative;z-index:1;">
 
-    <!-- ── Sidebar ─────────────────────────────────── -->
+    <!-- ── Sidebar ──────────────────────────────────── -->
     <aside class="advisor-sidebar">
-        <!-- Brand -->
         <div class="advisor-logo">
             <div class="bank-icon" style="width:40px;height:40px;font-size:1.1rem;">🏦</div>
             <div>
-                <div style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:1rem;color:var(--gold-light);">BankTurns</div>
+                <div style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:1rem;color:var(--text-primary);">BankTurns</div>
                 <div style="font-size:0.72rem;color:var(--text-muted);">Panel de Atención</div>
             </div>
         </div>
 
-        <!-- Advisor info -->
-        <div style="padding:16px;background:var(--gold-dim);border-radius:var(--radius-md);border:1px solid rgba(212,168,75,0.2);">
+        <div style="padding:16px;background:var(--red-light);border-radius:var(--radius-md);border:1px solid var(--glass-border);">
             <p style="font-size:0.75rem;color:var(--text-secondary);margin-bottom:4px;">Asesor activo</p>
-            <p style="font-weight:700;font-size:0.95rem;" id="sidebar-advisor-name">—</p>
+            <p style="font-weight:700;font-size:0.95rem;">@advisorName</p>
         </div>
 
         <div class="divider"></div>
 
-        <!-- Nav links -->
         <nav style="display:flex;flex-direction:column;gap:4px;">
             <button class="nav-link-custom active" onclick="showSection('section-queue')">
                 <span>📋</span> Cola de Espera
@@ -40,17 +48,19 @@
                 <a href="/WaitingRoom" class="btn-ghost" style="text-decoration:none;font-size:0.85rem;justify-content:center;">
                     📺 Sala de Espera
                 </a>
-                <button class="btn-ghost" id="btn-logout" style="font-size:0.85rem;">
-                    🚪 Cerrar Sesión
-                </button>
+                <form asp-controller="Advisors" asp-action="Logout" method="post">
+                    <button type="submit" class="btn-ghost" style="font-size:0.85rem;width:100%;">
+                        🚪 Cerrar Sesión
+                    </button>
+                </form>
             </div>
         </div>
     </aside>
 
-    <!-- ── Main Panel ─────────────────────────────── -->
+    <!-- ── Main Panel ──────────────────────────────── -->
     <main class="advisor-main">
 
-        <!-- Header row -->
+        <!-- Header -->
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;">
             <div>
                 <h1 style="font-size:1.6rem;"><span class="gradient-text">Panel de Atención</span></h1>
@@ -59,49 +69,75 @@
             <div class="clock" id="panel-clock">00:00:00</div>
         </div>
 
-        <!-- Stats row -->
+        @if (TempData["Success"] != null)
+        {
+            <div class="glass-card" style="padding:12px 20px;border-left:3px solid var(--green);margin-bottom:16px;">
+                <p style="color:var(--green);font-size:0.9rem;">@TempData["Success"]</p>
+            </div>
+        }
+        @if (TempData["Error"] != null)
+        {
+            <div class="glass-card" style="padding:12px 20px;border-left:3px solid #e74c3c;margin-bottom:16px;">
+                <p style="color:#e74c3c;font-size:0.9rem;">@TempData["Error"]</p>
+            </div>
+        }
+
+        <!-- Stats -->
         <div class="stats-row">
             <div class="stat-card glass-card">
-                <div class="stat-value" id="stat-pending" style="color:var(--blue-accent);">0</div>
+                <div class="stat-value" style="color:var(--blue-accent);">@pending.Count</div>
                 <div class="stat-label">En Cola</div>
             </div>
             <div class="stat-card glass-card">
-                <div class="stat-value" id="stat-active" style="color:var(--gold-light);">0</div>
+                <div class="stat-value" style="color:var(--red-primary);">@inProgress.Count</div>
                 <div class="stat-label">En Atención</div>
             </div>
             <div class="stat-card glass-card">
-                <div class="stat-value" id="stat-finished" style="color:var(--green);">0</div>
+                <div class="stat-value" style="color:var(--green);">@finished.Count</div>
                 <div class="stat-label">Finalizados Hoy</div>
             </div>
         </div>
 
-        <!-- Current turn action bar -->
-        <div id="action-bar" class="glass-card" style="padding:20px 24px;margin-bottom:24px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+        <!-- Action bar: turno activo del asesor -->
+        <div class="glass-card" style="padding:20px 24px;margin-bottom:24px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
             <div style="flex:1;min-width:200px;">
-                <p style="font-size:0.78rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-secondary);margin-bottom:4px;">Turno actualmente en atención</p>
+                <p style="font-size:0.78rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-secondary);margin-bottom:4px;">
+                    Turno actualmente en atención
+                </p>
                 <div style="display:flex;align-items:center;gap:12px;">
-                    <span class="turn-number-sm" id="action-ticket">—</span>
+                    <span class="turn-number-sm">@(activeTurn?.Ticket ?? "—")</span>
                     <div>
-                        <p style="font-weight:600;" id="action-name"></p>
-                        <p style="font-size:0.82rem;color:var(--text-secondary);" id="action-reason"></p>
+                        <p style="font-weight:600;">@activeTurn?.User?.Name</p>
+                        <p style="font-size:0.82rem;color:var(--text-secondary);">@activeTurn?.Reason</p>
                     </div>
                 </div>
             </div>
             <div style="display:flex;gap:10px;flex-wrap:wrap;">
-                <button class="btn-blue" id="btn-call-next">
-                    📣 Llamar Siguiente
-                </button>
-                <button class="btn-green" id="btn-finish" disabled>
-                    ✓ Finalizar Turno
-                </button>
+                <form asp-controller="AdvisorPanel" asp-action="CallNext" method="post" style="display:inline;">
+                    <button type="submit" class="btn-blue">
+                        📣 Llamar Siguiente
+                    </button>
+                </form>
+                @if (activeTurn != null)
+                {
+                    <button type="button" class="btn-green" onclick="document.getElementById('finish-modal').style.display='flex'">
+                        ✓ Finalizar Turno
+                    </button>
+                }
+                else
+                {
+                    <button type="button" class="btn-green" disabled style="opacity:0.4;cursor:not-allowed;">
+                        ✓ Finalizar Turno
+                    </button>
+                }
             </div>
         </div>
 
-        <!-- ── Section: Queue ── -->
+        <!-- ── Sección: Cola ── -->
         <div id="section-queue">
             <h2 style="font-size:1.1rem;font-weight:600;margin-bottom:16px;">Cola de Espera</h2>
             <div class="turns-table-wrap">
-                <table class="turns-table" id="queue-table">
+                <table class="turns-table">
                     <thead>
                         <tr>
                             <th>Ticket</th>
@@ -111,14 +147,46 @@
                             <th>Estado</th>
                         </tr>
                     </thead>
-                    <tbody id="queue-tbody">
-                        <tr><td colspan="5" style="text-align:center;padding:32px;color:var(--text-muted);">Sin turnos en cola</td></tr>
+                    <tbody>
+                        @{
+                            var allActive = inProgress.Concat(pending).ToList();
+                        }
+                        @if (!allActive.Any())
+                        {
+                            <tr>
+                                <td colspan="5" style="text-align:center;padding:32px;color:var(--text-muted);">
+                                    Sin turnos en cola
+                                </td>
+                            </tr>
+                        }
+                        @foreach (var turn in allActive)
+                        {
+                            var isMine = turn.Status == TurnStatus.InProgress && turn.AdvisorId == advisorId;
+                            <tr>
+                                <td><strong style="color:var(--red-primary);">@turn.Ticket</strong></td>
+                                <td>@turn.User?.Name</td>
+                                <td style="color:var(--text-secondary);font-size:0.85rem;">@turn.Reason</td>
+                                <td style="color:var(--text-muted);font-size:0.82rem;">
+                                    @turn.CreatedAt.ToString("hh:mm tt")
+                                </td>
+                                <td>
+                                    @if (turn.Status == TurnStatus.Pending)
+                                    {
+                                        <span class="badge badge-pending">En Cola</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge badge-progress">En Atención@(isMine ? " ★" : "")</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
                     </tbody>
                 </table>
             </div>
         </div>
 
-        <!-- ── Section: Attended ── -->
+        <!-- ── Sección: Atendidos ── -->
         <div id="section-attended" style="display:none;">
             <h2 style="font-size:1.1rem;font-weight:600;margin-bottom:16px;">Turnos Atendidos</h2>
             <div class="turns-table-wrap">
@@ -131,8 +199,26 @@
                             <th>Finalizado</th>
                         </tr>
                     </thead>
-                    <tbody id="attended-tbody">
-                        <tr><td colspan="4" style="text-align:center;padding:32px;color:var(--text-muted);">Sin turnos atendidos aún</td></tr>
+                    <tbody>
+                        @if (!finished.Any())
+                        {
+                            <tr>
+                                <td colspan="4" style="text-align:center;padding:32px;color:var(--text-muted);">
+                                    Sin turnos atendidos aún
+                                </td>
+                            </tr>
+                        }
+                        @foreach (var turn in finished)
+                        {
+                            <tr>
+                                <td><strong style="color:var(--green);">@turn.Ticket</strong></td>
+                                <td>@turn.User?.Name</td>
+                                <td style="color:var(--text-secondary);font-size:0.85rem;">@turn.Reason</td>
+                                <td style="color:var(--text-muted);font-size:0.82rem;">
+                                    ✅ @turn.FinishedAt?.ToString("hh:mm tt")
+                                </td>
+                            </tr>
+                        }
                     </tbody>
                 </table>
             </div>
@@ -141,217 +227,51 @@
     </main>
 </div>
 
-<!-- ── Finish Modal ───────────────────────────── -->
+<!-- ── Modal: Finalizar Turno ── -->
 <div class="modal-overlay" id="finish-modal" style="display:none;">
     <div class="modal-box">
         <div class="glass-card" style="padding:32px;">
             <h2 style="font-size:1.2rem;margin-bottom:6px;">Finalizar Turno</h2>
-            <p class="text-secondary-custom" style="font-size:0.88rem;margin-bottom:20px;">Añade un comentario sobre la atención antes de cerrar el turno.</p>
-            <div class="form-section">
+            <p class="text-secondary-custom" style="font-size:0.88rem;margin-bottom:20px;">
+                Añade un comentario sobre la atención antes de cerrar el turno.
+            </p>
+            <form asp-controller="AdvisorPanel" asp-action="FinishTurn" method="post" class="form-section">
                 <div class="field-group">
                     <label class="field-label" for="finish-comment">Comentario (opcional)</label>
-                    <textarea id="finish-comment" class="field-input" placeholder="Ej: Se realizó apertura de cuenta, cliente satisfecho..."></textarea>
+                    <textarea id="finish-comment" name="comment" class="field-input"
+                              placeholder="Ej: Se realizó apertura de cuenta, cliente satisfecho..."></textarea>
                 </div>
                 <div style="display:flex;gap:10px;">
-                    <button class="btn-green" id="btn-confirm-finish" style="flex:1;">
+                    <button type="submit" class="btn-green" style="flex:1;">
                         ✓ Confirmar y Cerrar
                     </button>
-                    <button class="btn-ghost" id="btn-cancel-modal" style="flex:1;">
+                    <button type="button" class="btn-ghost" style="flex:1;"
+                            onclick="document.getElementById('finish-modal').style.display='none'">
                         Cancelar
                     </button>
                 </div>
-            </div>
+            </form>
         </div>
     </div>
 </div>
 
 @section Scripts {
 <script>
-(function () {
-    // ── Auth guard ──
-    const advisorId   = sessionStorage.getItem('advisorId');
-    const advisorName = sessionStorage.getItem('advisorName');
-
-    if (!advisorId) {
-        window.location.href = '/AdvisorPanel';
-        return;
-    }
-
-    document.getElementById('sidebar-advisor-name').textContent = advisorName || 'Asesor';
-
-    // ── Clock ──
+    // Clock
     function tick() {
         document.getElementById('panel-clock').textContent =
             new Date().toLocaleTimeString('es-CO');
     }
     tick(); setInterval(tick, 1000);
 
-    // ── Section navigation ──
+    // Section navigation
     window.showSection = function(id) {
-        ['section-queue', 'section-attended'].forEach(s => {
+        ['section-queue', 'section-attended'].forEach(function(s) {
             document.getElementById(s).style.display = s === id ? '' : 'none';
         });
-        document.querySelectorAll('.nav-link-custom').forEach(btn => {
-            btn.classList.toggle('active', btn.getAttribute('onclick')?.includes(id));
+        document.querySelectorAll('.nav-link-custom').forEach(function(btn) {
+            btn.classList.toggle('active', (btn.getAttribute('onclick') || '').includes(id));
         });
     };
-
-    // ── State ──
-    let currentTurn = null;
-
-    function updateActionBar(turn) {
-        currentTurn = turn;
-        const ticket = document.getElementById('action-ticket');
-        const name   = document.getElementById('action-name');
-        const reason = document.getElementById('action-reason');
-        const finBtn = document.getElementById('btn-finish');
-
-        if (turn) {
-            ticket.textContent = turn.ticket || '—';
-            name.textContent   = turn.user?.name || '';
-            reason.textContent = turn.user?.reason || '';
-            finBtn.disabled    = false;
-        } else {
-            ticket.textContent = '—';
-            name.textContent   = '';
-            reason.textContent = '';
-            finBtn.disabled    = true;
-        }
-    }
-
-    // ── Render Queue Table ──
-    function renderQueue(turns) {
-        const pending  = turns.filter(t => t.status === 0);
-        const inAttn   = turns.find(t => t.status === 1 && t.advisorId == advisorId);
-        const finished = turns.filter(t => t.status === 2);
-
-        document.getElementById('stat-pending').textContent  = pending.length;
-        document.getElementById('stat-active').textContent   = turns.filter(t => t.status === 1).length;
-        document.getElementById('stat-finished').textContent = finished.length;
-
-        updateActionBar(inAttn || null);
-
-        const tbody = document.getElementById('queue-tbody');
-        const all = [...turns.filter(t => t.status === 1), ...pending];
-
-        if (all.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:32px;color:var(--text-muted);">Sin turnos activos</td></tr>`;
-            return;
-        }
-
-        tbody.innerHTML = all.map(t => {
-            const isMine = t.status === 1 && t.advisorId == advisorId;
-            const statusBadge = t.status === 0
-                ? '<span class="badge badge-pending">En Cola</span>'
-                : `<span class="badge badge-progress">En Atención${isMine ? ' ★' : ''}</span>`;
-            const d = t.createdAt ? new Date(t.createdAt).toLocaleTimeString('es-CO', {hour:'2-digit',minute:'2-digit'}) : '—';
-            return `<tr>
-                <td><strong style="color:var(--gold-light);">${t.ticket || '—'}</strong></td>
-                <td>${t.user?.name || '—'}</td>
-                <td style="color:var(--text-secondary);font-size:0.85rem;">${t.user?.reason || '—'}</td>
-                <td style="color:var(--text-muted);font-size:0.82rem;">${d}</td>
-                <td>${statusBadge}</td>
-            </tr>`;
-        }).join('');
-
-        // Attended section
-        const attTbody = document.getElementById('attended-tbody');
-        if (finished.length === 0) {
-            attTbody.innerHTML = `<tr><td colspan="4" style="text-align:center;padding:32px;color:var(--text-muted);">Sin turnos atendidos aún</td></tr>`;
-        } else {
-            attTbody.innerHTML = finished.map(t => {
-                const d = t.finishedAt ? new Date(t.finishedAt).toLocaleTimeString('es-CO', {hour:'2-digit',minute:'2-digit'}) : '—';
-                return `<tr>
-                    <td><strong style="color:var(--green);">${t.ticket || '—'}</strong></td>
-                    <td>${t.user?.name || '—'}</td>
-                    <td style="color:var(--text-secondary);font-size:0.85rem;">${t.user?.reason || '—'}</td>
-                    <td style="color:var(--text-muted);font-size:0.82rem;">✅ ${d}</td>
-                </tr>`;
-            }).join('');
-        }
-    }
-
-    // ── Poll ──
-    async function poll() {
-        try {
-            const res = await fetch('/api/Turns/queue');
-            if (res.ok) {
-                const data = await res.json();
-                renderQueue(data.data || []);
-            }
-        } catch (_) {}
-    }
-
-    poll();
-    setInterval(poll, 3000);
-
-    // ── Call Next ──
-    document.getElementById('btn-call-next').addEventListener('click', async () => {
-        const btn = document.getElementById('btn-call-next');
-        btn.disabled = true;
-        btn.innerHTML = '<span class="spinner"></span> Llamando...';
-        try {
-            const res = await fetch(`/api/Turns/call-next?advisorId=${advisorId}`, { method: 'POST' });
-            const data = await res.json();
-            if (res.ok) {
-                showToast(`Llamando turno ${data.data?.ticket}`, 'success');
-                await poll();
-            } else {
-                showToast(data.message || 'No hay turnos en cola.', 'info');
-            }
-        } catch (e) {
-            showToast('Error al llamar turno.', 'error');
-        } finally {
-            btn.disabled = false;
-            btn.innerHTML = '📣 Llamar Siguiente';
-        }
-    });
-
-    // ── Finish Turn (open modal) ──
-    document.getElementById('btn-finish').addEventListener('click', () => {
-        if (!currentTurn) return;
-        document.getElementById('finish-comment').value = '';
-        document.getElementById('finish-modal').style.display = 'flex';
-    });
-
-    document.getElementById('btn-cancel-modal').addEventListener('click', () => {
-        document.getElementById('finish-modal').style.display = 'none';
-    });
-
-    document.getElementById('btn-confirm-finish').addEventListener('click', async () => {
-        const comment = document.getElementById('finish-comment').value.trim();
-        const btn = document.getElementById('btn-confirm-finish');
-        btn.disabled = true;
-        btn.innerHTML = '<span class="spinner"></span> Finalizando...';
-
-        try {
-            const res = await fetch(`/api/Turns/${advisorId}/finish`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ comment })
-            });
-            const data = await res.json();
-            if (res.ok) {
-                showToast('Turno finalizado exitosamente.', 'success');
-                document.getElementById('finish-modal').style.display = 'none';
-                await poll();
-            } else {
-                showToast(data.message || 'No se pudo finalizar el turno.', 'error');
-            }
-        } catch (e) {
-            showToast('Error de conexión.', 'error');
-        } finally {
-            btn.disabled = false;
-            btn.innerHTML = '✓ Confirmar y Cerrar';
-        }
-    });
-
-    // ── Logout ──
-    document.getElementById('btn-logout').addEventListener('click', () => {
-        sessionStorage.removeItem('advisorId');
-        sessionStorage.removeItem('advisorName');
-        window.location.href = '/AdvisorPanel';
-    });
-})();
 </script>
 }

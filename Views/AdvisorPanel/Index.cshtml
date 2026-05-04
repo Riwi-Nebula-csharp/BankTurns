@@ -11,48 +11,68 @@
         <div style="text-align:center;margin-bottom:40px;">
             <div class="bank-icon" style="margin:0 auto 16px;">🏦</div>
             <h1 style="font-size:1.8rem;"><span class="gradient-text">Panel del Asesor</span></h1>
-            <p class="text-secondary-custom" style="font-size:0.9rem;margin-top:6px;">Accede con tus credenciales para gestionar los turnos</p>
+            <p class="text-secondary-custom" style="font-size:0.9rem;margin-top:6px;">
+                Accede con tus credenciales para gestionar los turnos
+            </p>
         </div>
 
+        @if (TempData["Error"] != null)
+        {
+            <div class="glass-card" style="padding:12px 20px;border-left:3px solid #e74c3c;margin-bottom:16px;">
+                <p style="color:#e74c3c;font-size:0.9rem;">@TempData["Error"]</p>
+            </div>
+        }
+        @if (TempData["Success"] != null)
+        {
+            <div class="glass-card" style="padding:12px 20px;border-left:3px solid var(--green);margin-bottom:16px;">
+                <p style="color:var(--green);font-size:0.9rem;">@TempData["Success"]</p>
+            </div>
+        }
+
         <!-- Login Card -->
-        <div class="glass-card" style="padding:36px;" id="login-card">
-            <div class="form-section">
+        <div class="glass-card" style="padding:36px;">
+
+            <form asp-controller="Advisors" asp-action="Login" method="post" class="form-section">
                 <div class="field-group">
                     <label class="field-label" for="adv-email">Correo electrónico</label>
-                    <input id="adv-email" class="field-input" type="email" placeholder="asesor@bankturns.co" autocomplete="email" />
+                    <input id="adv-email" name="Email" class="field-input" type="email"
+                           placeholder="asesor@bankturns.co" autocomplete="email" required />
                 </div>
                 <div class="field-group">
                     <label class="field-label" for="adv-pass">Contraseña</label>
-                    <input id="adv-pass" class="field-input" type="password" placeholder="••••••••" autocomplete="current-password" />
+                    <input id="adv-pass" name="Password" class="field-input" type="password"
+                           placeholder="••••••••" autocomplete="current-password" required />
                 </div>
-
-                <button class="btn-gold btn-full" id="btn-login">
+                <button type="submit" class="btn-gold btn-full">
                     Ingresar al Panel
                 </button>
-            </div>
+            </form>
 
             <div class="divider"></div>
 
-            <!-- Register new advisor (dev only section) -->
+            <!-- Registrar nuevo asesor -->
             <details style="cursor:pointer;">
                 <summary style="font-size:0.82rem;color:var(--text-muted);list-style:none;display:flex;align-items:center;gap:6px;">
                     <span>⚙️</span> Registrar nuevo asesor
                 </summary>
-                <div class="form-section" style="margin-top:16px;">
+                <form asp-controller="Advisors" asp-action="Create" method="post" class="form-section" style="margin-top:16px;">
                     <div class="field-group">
                         <label class="field-label" for="new-name">Nombre</label>
-                        <input id="new-name" class="field-input" type="text" placeholder="Nombre del asesor" />
+                        <input id="new-name" name="Name" class="field-input" type="text"
+                               placeholder="Nombre del asesor" />
                     </div>
                     <div class="field-group">
                         <label class="field-label" for="new-email">Correo</label>
-                        <input id="new-email" class="field-input" type="email" placeholder="correo@bankturns.co" />
+                        <input id="new-email" name="Email" class="field-input" type="email"
+                               placeholder="correo@bankturns.co" />
                     </div>
                     <div class="field-group">
                         <label class="field-label" for="new-pass">Contraseña</label>
-                        <input id="new-pass" class="field-input" type="password" placeholder="Mínimo 6 caracteres" />
+                        <input id="new-pass" name="Password" class="field-input" type="password"
+                               placeholder="Mínimo 6 caracteres" />
                     </div>
-                    <button class="btn-ghost btn-full" id="btn-register-adv">Crear Asesor</button>
-                </div>
+                    <button type="submit" class="btn-ghost btn-full">Crear Asesor</button>
+                </form>
             </details>
         </div>
 
@@ -63,81 +83,3 @@
         </p>
     </div>
 </div>
-
-@section Scripts {
-<script>
-(function() {
-    // ── Login ──
-    document.getElementById('btn-login').addEventListener('click', async () => {
-        const email = document.getElementById('adv-email').value.trim();
-        const pass  = document.getElementById('adv-pass').value;
-        if (!email || !pass) { showToast('Completa todos los campos.', 'error'); return; }
-
-        const btn = document.getElementById('btn-login');
-        btn.disabled = true;
-        btn.innerHTML = '<span class="spinner"></span> Verificando...';
-
-        try {
-            const res = await fetch('/api/Advisors/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password: pass })
-            });
-            const data = await res.json();
-            if (res.ok && data.data) {
-                sessionStorage.setItem('advisorId',   data.data.id);
-                sessionStorage.setItem('advisorName', data.data.name);
-                showToast('¡Bienvenido, ' + data.data.name + '!', 'success');
-                setTimeout(() => { window.location.href = '/AdvisorPanel/Panel'; }, 800);
-            } else {
-                showToast(data.message || 'Credenciales incorrectas.', 'error');
-                btn.disabled = false;
-                btn.innerHTML = 'Ingresar al Panel';
-            }
-        } catch (e) {
-            showToast('Error de conexión.', 'error');
-            btn.disabled = false;
-            btn.innerHTML = 'Ingresar al Panel';
-        }
-    });
-
-    // ── Register new advisor ──
-    document.getElementById('btn-register-adv').addEventListener('click', async () => {
-        const name  = document.getElementById('new-name').value.trim();
-        const email = document.getElementById('new-email').value.trim();
-        const pass  = document.getElementById('new-pass').value;
-        if (!name || !email || !pass) { showToast('Completa todos los campos de registro.', 'error'); return; }
-
-        const btn = document.getElementById('btn-register-adv');
-        btn.disabled = true; btn.textContent = 'Creando...';
-
-        try {
-            const res = await fetch('/api/Advisors', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, email, password: pass })
-            });
-            const data = await res.json();
-            if (res.ok) {
-                showToast('Asesor creado. Ya puedes iniciar sesión.', 'success');
-                document.getElementById('adv-email').value = email;
-                document.getElementById('new-name').value = '';
-                document.getElementById('new-email').value = '';
-                document.getElementById('new-pass').value = '';
-            } else {
-                showToast(data.message || 'Error al registrar asesor.', 'error');
-            }
-        } catch (e) {
-            showToast('Error de conexión.', 'error');
-        } finally {
-            btn.disabled = false; btn.textContent = 'Crear Asesor';
-        }
-    });
-
-    // Enter key
-    document.getElementById('adv-pass').addEventListener('keydown', e => {
-        if (e.key === 'Enter') document.getElementById('btn-login').click();
-    });
-})();
-</script>
-}
