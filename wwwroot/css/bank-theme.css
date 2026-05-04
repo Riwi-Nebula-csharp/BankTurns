@@ -55,11 +55,64 @@ body {
   overflow-x: hidden;
 }
 
-.top-navbar-brand{
-  background: var(--red-primary);
-}
+/* ─── Top Navbar ────────────────────────────── */
 .top-navbar {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+  padding: 12px 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   background: var(--red-primary);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.top-navbar-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+}
+
+.top-navbar-brand .bank-icon {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  box-shadow: none;
+  margin: 0;
+}
+
+.top-navbar-brand-text {
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700;
+  font-size: 1.15rem;
+  color: white;
+}
+
+.top-navbar-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.top-navbar-actions .btn-ghost {
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: white;
+}
+.top-navbar-actions .btn-ghost:hover {
+  background: rgba(255, 255, 255, 0.25);
+  border-color: rgba(255, 255, 255, 0.5);
+  color: white;
+}
+
+.top-navbar-actions .btn-gold {
+  background: white;
+  color: var(--red-primary);
+  box-shadow: none;
+}
+.top-navbar-actions .btn-gold:hover {
+  background: var(--red-light);
+  color: var(--red-hover);
 }
 
 /* ─── Background Mesh ───────────────────────── */
