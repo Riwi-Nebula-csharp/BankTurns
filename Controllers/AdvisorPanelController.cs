@@ -35,14 +35,15 @@ public class AdvisorPanelController : Controller
         var queueResponse    = await _turnService.GetQueueAsync();
         // Turnos del asesor de hoy (para sección "Atendidos")
         var advisorResponse  = await _turnService.GetAdvisorTurnsAsync(advisorId.Value);
+        var queueData = queueResponse.Data ?? new();
         // Turno activo actual del asesor
-        var activeResponse   = await _turnService.HasActiveTurnAsync(advisorId.Value);
+        var activeTurn = queueData.FirstOrDefault(t => t.AdvisorId == advisorId.Value && t.Status == BankTurns.Models.TurnStatus.InProgress);
 
         ViewBag.AdvisorId   = advisorId.Value;
         ViewBag.AdvisorName = advisorName;
-        ViewBag.Queue       = queueResponse.Data ?? new();
+        ViewBag.Queue       = queueData;
         ViewBag.AdvisorTurns = advisorResponse.Data ?? new();
-        ViewBag.ActiveTurn  = activeResponse.Status ? activeResponse.Data : null;
+        ViewBag.ActiveTurn  = activeTurn;
 
         return View();
     }

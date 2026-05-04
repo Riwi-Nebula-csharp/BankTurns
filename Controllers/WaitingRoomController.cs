@@ -19,7 +19,9 @@ public class WaitingRoomController : Controller
         var queue    = response.Data ?? new();
 
         // Separar turno en atención del resto
-        var inProgress = queue.FirstOrDefault(t => t.Status == BankTurns.Models.TurnStatus.InProgress);
+        var inProgress = queue.Where(t => t.Status == BankTurns.Models.TurnStatus.InProgress)
+                              .OrderByDescending(t => t.CalledAt)
+                              .FirstOrDefault();
         var pending    = queue.Where(t => t.Status == BankTurns.Models.TurnStatus.Pending)
                               .OrderBy(t => t.CreatedAt)
                               .ToList();

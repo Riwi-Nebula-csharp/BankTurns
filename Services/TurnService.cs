@@ -74,7 +74,7 @@ namespace BankTurns.Services
 
             var queue = await _context.Turns
                 .Include(t => t.User)
-                .Where(t => t.Status == TurnStatus.Pending)
+                .Where(t => t.Status == TurnStatus.Pending || t.Status == TurnStatus.InProgress)
                 .OrderBy(t => t.CreatedAt)
                 .ToListAsync();
 

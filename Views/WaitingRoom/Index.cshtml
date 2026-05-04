@@ -11,19 +11,19 @@
 
     <!-- Left: Video Panel -->
     <div class="wr-video-panel">
-        <div style="position:absolute;top:0;left:0;right:0;z-index:10;padding:18px 24px;display:flex;align-items:center;justify-content:space-between;background:linear-gradient(180deg,rgba(5,13,26,0.9),transparent);">
+        <div style="position:absolute;top:0;left:0;right:0;z-index:10;padding:18px 24px;display:flex;align-items:center;justify-content:space-between;background:linear-gradient(180deg,rgba(0,0,0,0.7),transparent);">
             <div style="display:flex;align-items:center;gap:12px;">
-                <div class="bank-icon" style="width:40px;height:40px;font-size:1.2rem;">🏦</div>
+                <div class="bank-icon" style="width:40px;height:40px;font-size:1.2rem;display:flex;align-items:center;justify-content:center;background:var(--red-primary);border-radius:50%;color:white;">🏦</div>
                 <div>
-                    <div style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:1.1rem;color:var(--gold-light);">BankTurns</div>
-                    <div style="font-size:0.75rem;color:var(--text-secondary);">Sala de Espera</div>
+                    <div style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:1.1rem;color:white;">BankTurns</div>
+                    <div style="font-size:0.75rem;color:rgba(255,255,255,0.8);">Sala de Espera</div>
                 </div>
             </div>
-            <div class="clock" id="clock-display">00:00:00</div>
+            <div class="clock" style="color:white;" id="clock-display">00:00:00</div>
         </div>
 
         <iframe
-            src="https://www.youtube.com/embed/videoseries?list=PLQ1k7bCKJ7QfNXRuLAWPDyS2A3fZW18L2&autoplay=1&mute=1&loop=1&controls=0&rel=0&showinfo=0"
+            src="https://www.youtube.com/embed/jsiE3gY9vR4?start=22&autoplay=1&mute=1&loop=1&playlist=jsiE3gY9vR4&controls=0&rel=0"
             allow="autoplay; encrypted-media"
             allowfullscreen
             style="width:100%;height:100%;min-height:calc(100vh - 48px);border:none;">
@@ -33,6 +33,7 @@
     <!-- Right: Queue Sidebar -->
     <div class="wr-sidebar" style="position:relative;z-index:1;padding:24px 0;">
 
+        <div id="queue-container" style="display:flex;flex-direction:column;gap:20px;height:100%;">
         <!-- Turno en atención -->
         <div class="current-turn-display">
             <p style="font-size:0.78rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-secondary);margin-bottom:10px;">
@@ -79,6 +80,7 @@
                 }
             </div>
         </div>
+        </div>
 
         <!-- Footer nav -->
         <div style="display:flex;gap:10px;padding:0 0 8px;">
@@ -90,8 +92,7 @@
             </a>
         </div>
 
-        <!-- Auto-refresh cada 5 segundos -->
-        <meta http-equiv="refresh" content="5">
+        </div>
     </div>
 </div>
 
@@ -103,5 +104,23 @@
     }
     updateClock();
     setInterval(updateClock, 1000);
+
+    // Polling without full page reload (keeps video playing)
+    setInterval(async () => {
+        try {
+            const res = await fetch(window.location.href);
+            if (res.ok) {
+                const text = await res.text();
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(text, 'text/html');
+                const newContent = doc.getElementById('queue-container');
+                if (newContent) {
+                    document.getElementById('queue-container').innerHTML = newContent.innerHTML;
+                }
+            }
+        } catch (e) {
+            console.error('Error updating queue:', e);
+        }
+    }, 3000);
 </script>
 }

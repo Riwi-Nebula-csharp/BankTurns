@@ -5,56 +5,93 @@
 }
 
 <style>
-    .kiosk-page {
-        min-height: 100vh;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        position: relative;
-        z-index: 1;
-        padding: 20px;
+    /* Estilos específicos para Impresora Térmica XPrinter XP-58 */
+    @media print {
+        @page {
+            margin: 0;
+            size: 58mm auto; /* Ancho del rollo XP-58 */
+        }
+        body * {
+            visibility: hidden;
+        }
+        #print-area, #print-area * {
+            visibility: visible;
+        }
+        #print-area {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 48mm; /* Área imprimible de 58mm es ~48mm */
+            margin: 0;
+            padding: 0;
+            border: none;
+            box-shadow: none;
+            background: white;
+            color: black;
+            font-family: 'Courier New', Courier, monospace; /* Mejor para térmicas */
+        }
+        /* Forzar alto contraste y esconder fondos */
+        .turn-number { 
+            font-size: 2.8rem !important; 
+            color: black !important; 
+            font-weight: 900 !important;
+            margin: 10px 0;
+        }
+        .ticket-card { padding: 0 !important; }
+        .no-print, .btn-blue, .btn-ghost { display: none !important; }
+        p, div, h2 { color: black !important; }
     }
 </style>
 
 <div class="kiosk-page">
     <div class="kiosk-container">
 
-        <div class="ticket-card">
-            <p style="font-size:0.8rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-muted);margin-bottom:8px;">
-                🏦 Banco BankTurns
+        <div class="ticket-card" id="print-area" style="padding:32px;">
+            <h2 style="font-size:1.4rem;text-transform:uppercase;text-align:center;margin-bottom:4px;font-weight:800;letter-spacing:1px;">
+                Banco BankTurns
+            </h2>
+            <p style="font-size:0.8rem;text-align:center;border-bottom:1px dashed var(--text-muted);padding-bottom:12px;margin-bottom:12px;color:var(--text-secondary);">
+                Fecha: @Model.IssuedAt.ToString("dd/MM/yyyy")<br/>
+                Hora: @Model.IssuedAt.ToString("hh:mm tt")
             </p>
-            <div class="ticket-perforations">
-                <span></span><span></span><span></span><span></span><span></span>
-                <span></span><span></span><span></span><span></span><span></span>
+            
+            <p style="font-size:0.9rem;text-align:center;margin-bottom:4px;color:var(--text-secondary);">Turno Asignado</p>
+            <div class="turn-number" style="text-align:center;line-height:1;">@Model.Ticket</div>
+            
+            <div style="margin-top:16px;border-top:1px dashed var(--text-muted);padding-top:12px;text-align:center;">
+                <p style="font-size:1rem;font-weight:700;">@Model.ClientName</p>
+                <p style="font-size:0.85rem;margin-top:4px;color:var(--text-secondary);">📋 @Model.Reason</p>
             </div>
-            <p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:4px;">Tu número de turno</p>
-            <div class="turn-number">@Model.Ticket</div>
-            <div class="ticket-perforations" style="margin-top:12px;">
-                <span></span><span></span><span></span><span></span><span></span>
-                <span></span><span></span><span></span><span></span><span></span>
+            
+            <div style="margin-top:16px;text-align:center;">
+                <p style="font-size:0.9rem;font-weight:600;">¡Por favor espera tu llamado en la sala!</p>
             </div>
-            <div style="margin-top:16px;">
-                <p style="font-size:1rem;font-weight:600;color:var(--text-primary);">👤 @Model.ClientName</p>
-                <p style="font-size:0.85rem;color:var(--text-secondary);margin-top:4px;">📋 @Model.Reason</p>
-            </div>
-            <div style="margin-top:16px;padding:12px;background:rgba(212,168,75,0.08);border-radius:var(--radius-sm);">
-                <p style="font-size:0.8rem;color:var(--text-secondary);">
-                    📺 Dirígete a la <strong style="color:var(--gold);">Sala de Espera</strong> y espera ser llamado por un asesor.
-                </p>
-            </div>
-            <p style="font-size:0.75rem;color:var(--text-muted);margin-top:12px;">
-                Emitido: @Model.IssuedAt.ToString("hh:mm tt")
-            </p>
         </div>
 
-        <div style="display:flex;gap:12px;margin-top:20px;">
-            <a href="/WaitingRoom" class="btn-blue" style="flex:1;justify-content:center;text-decoration:none;">
-                📺 Ver Sala de Espera
-            </a>
-            <a href="/Kiosk" class="btn-ghost" style="flex:1;text-align:center;">
+        <div style="display:flex;gap:12px;margin-top:24px;" class="no-print">
+            <button onclick="window.print()" class="btn-blue" style="flex:1;justify-content:center;">
+                🖨️ Imprimir Ticket
+            </button>
+            <a href="/Kiosk" class="btn-ghost" style="flex:1;text-align:center;text-decoration:none;">
                 + Nuevo Turno
+            </a>
+        </div>
+        <div style="margin-top:12px;" class="no-print">
+             <a href="/WaitingRoom" class="btn-ghost" style="width:100%;text-align:center;display:block;text-decoration:none;">
+                📺 Ir a Sala de Espera
             </a>
         </div>
 
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        // Disparar impresión automáticamente al cargar la página (para el kiosco)
+        window.onload = function() {
+            setTimeout(function() {
+                window.print();
+            }, 800);
+        };
+    </script>
+}
