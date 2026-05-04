@@ -1,4 +1,4 @@
-﻿using BankTurns.Interfaces;
+using BankTurns.Interfaces;
 using BankTurns.Response;
 using BankTurns.Models;
 using BankTurns.Data;
@@ -17,14 +17,14 @@ namespace BankTurns.Services
             _historyService = historyService;
         }
 
-        public async Task<ServicesResponse<Turn>> CreateAsync(int userId)
+        public async Task<ServicesResponse<Turn>> CreateAsync(int userId, BankReason reason)
         {
             var response = new ServicesResponse<Turn>();
 
             var user = await _context.Users.FindAsync(userId);
             if (user == null)
             {
-                response.Status = false;
+                response.Status  = false;
                 response.Message = "The User Not Found.";
                 return response;
             }
@@ -34,25 +34,23 @@ namespace BankTurns.Services
                                (t.Status == TurnStatus.Pending || t.Status == TurnStatus.InProgress));
             if (hasActive)
             {
-                response.Status = false;
-                response.Message = "the user is already active.";
+                response.Status  = false;
+                response.Message = "The user already has an active turn.";
                 return response;
             }
 
             var today = DateTime.UtcNow.Date;
-
             var todayCount = await _context.Turns
                 .CountAsync(t => t.CreatedAt >= today);
 
-            // genero ticker el 3d es para decir 3 decimales  osea 001 002 y asi mijo
-            var ticketNumber = todayCount + 1;
-            var ticket = $"A{ticketNumber:D3}";
+            var ticket = $"A{todayCount + 1:D3}";
 
             var turn = new Turn
             {
-                UserId = userId,
-                Ticket = ticket,
-                Status = TurnStatus.Pending,
+                UserId    = userId,
+                Ticket    = ticket,
+                Reason    = GetBankReasonText(reason),
+                Status    = TurnStatus.Pending,
                 CreatedAt = DateTime.Now
             };
 
@@ -62,13 +60,27 @@ namespace BankTurns.Services
             await _historyService.RegisterAsync(turn.Id, null,
                 TurnStatus.Pending, TurnStatus.Pending, "Turno creado");
 
-            // Cargar relación User para retornar datos completos
             await _context.Entry(turn).Reference(t => t.User).LoadAsync();
 
-            response.Status = true;
-            response.Message = $"Turn {ticket} create successfully.";
-            response.Data = turn;
+            response.Status  = true;
+            response.Message = $"Turn {ticket} created successfully.";
+            response.Data    = turn;
             return response;
+        }
+
+        private static string GetBankReasonText(BankReason reason)
+        {
+            return reason switch
+            {
+                BankReason.BancoNacion    => "Banco Nación",
+                BankReason.BancoProvincia => "Banco Provincia",
+                BankReason.BancoGalicia   => "Banco Galicia",
+                BankReason.BancoSantander => "Banco Santander",
+                BankReason.BancoHSBC      => "Banco HSBC",
+                BankReason.BancoMacro     => "Banco Macro",
+                BankReason.BancoICBC      => "Banco ICBC",
+                _                         => reason.ToString()
+            };
         }
 
         public async Task<ServicesResponse<List<Turn>>> GetQueueAsync()
@@ -77,13 +89,13 @@ namespace BankTurns.Services
 
             var queue = await _context.Turns
                 .Include(t => t.User)
-                .Where(t => t.Status == TurnStatus.Pending)
+                .Where(t => t.Status == TurnStatus.Pending || t.Status == TurnStatus.InProgress)
                 .OrderBy(t => t.CreatedAt)
                 .ToListAsync();
 
-            response.Status = true;
-            response.Message = $"queue currenly: {queue.Count} turn(s) pending(s).";
-            response.Data = queue;
+            response.Status  = true;
+            response.Message = $"Queue currently: {queue.Count} turn(s) pending.";
+            response.Data    = queue;
             return response;
         }
 
@@ -91,12 +103,11 @@ namespace BankTurns.Services
         {
             var response = new ServicesResponse<Turn>();
 
-            // Verificar asesor
             var advisor = await _context.Advisors.FindAsync(advisorId);
             if (advisor == null || advisor.Status == AdvisorStatus.Inactive)
             {
-                response.Status = false;
-                response.Message = "Advisor no found or inactive.";
+                response.Status  = false;
+                response.Message = "Advisor not found or inactive.";
                 return response;
             }
 
@@ -104,12 +115,11 @@ namespace BankTurns.Services
                 .AnyAsync(t => t.AdvisorId == advisorId && t.Status == TurnStatus.InProgress);
             if (advisorBusy)
             {
-                response.Status = false;
+                response.Status  = false;
                 response.Message = "The advisor already has a turn in progress. Finish it first.";
                 return response;
             }
 
-            // tomar siguiente turn
             var next = await _context.Turns
                 .Include(t => t.User)
                 .Where(t => t.Status == TurnStatus.Pending)
@@ -118,28 +128,27 @@ namespace BankTurns.Services
 
             if (next == null)
             {
-                response.Status = false;
+                response.Status  = false;
                 response.Message = "There are no pending turns in the queue.";
                 return response;
             }
 
             var previousStatus = next.Status;
-            next.Status = TurnStatus.InProgress;
+            next.Status    = TurnStatus.InProgress;
             next.AdvisorId = advisorId;
-            next.CalledAt = DateTime.Now;
+            next.CalledAt  = DateTime.Now;
 
             await _context.SaveChangesAsync();
 
             await _historyService.RegisterAsync(next.Id, advisorId,
                 previousStatus, TurnStatus.InProgress,
-                $"Turn call for advisor {advisor.Name}");
+                $"Turn called by advisor {advisor.Name}");
 
-            // Cargar relación User para retornar datos completos
             await _context.Entry(next).Reference(t => t.Advisor).LoadAsync();
 
-            response.Status = true;
-            response.Message = $"Turn {next.Ticket} call. client: {next.User.Name}.";
-            response.Data = next;
+            response.Status  = true;
+            response.Message = $"Turn {next.Ticket} called. Client: {next.User.Name}.";
+            response.Data    = next;
             return response;
         }
 
@@ -155,12 +164,12 @@ namespace BankTurns.Services
 
             if (turn == null)
             {
-                response.Status = false;
+                response.Status  = false;
                 response.Message = "No turn in progress was found for this advisor.";
                 return response;
             }
 
-            turn.Status = TurnStatus.Finished;
+            turn.Status     = TurnStatus.Finished;
             turn.FinishedAt = DateTime.Now;
 
             await _context.SaveChangesAsync();
@@ -169,12 +178,11 @@ namespace BankTurns.Services
                 TurnStatus.InProgress, TurnStatus.Finished,
                 comment ?? "Turn Finished");
 
-            response.Status = true;
-            response.Message = $"Turn {turn.Ticket} Finished successfully.";
-            response.Data = turn;
+            response.Status  = true;
+            response.Message = $"Turn {turn.Ticket} finished successfully.";
+            response.Data    = turn;
             return response;
         }
-
 
         public async Task<ServicesResponse<Turn>> HasActiveTurnAsync(int userId)
         {
@@ -189,7 +197,7 @@ namespace BankTurns.Services
 
             if (turn == null)
             {
-                response.Status = false;
+                response.Status  = false;
                 response.Message = "The user does not have an active turn.";
                 return response;
             }
@@ -202,7 +210,7 @@ namespace BankTurns.Services
                                      t.CreatedAt <= turn.CreatedAt);
             }
 
-            response.Status = true;
+            response.Status  = true;
             response.Message = turn.Status == TurnStatus.Pending
                 ? $"Turn {turn.Ticket} on hold. Queue position: {position}."
                 : $"Turn {turn.Ticket} is being attended by {turn.Advisor?.Name ?? "advisor"}.";
@@ -221,9 +229,9 @@ namespace BankTurns.Services
                 .OrderByDescending(t => t.CreatedAt)
                 .ToListAsync();
 
-            response.Status = true;
+            response.Status  = true;
             response.Message = $"{turns.Count} turn(s) found for the advisor today.";
-            response.Data = turns;
+            response.Data    = turns;
             return response;
         }
 
@@ -238,12 +246,12 @@ namespace BankTurns.Services
 
             if (turn == null)
             {
-                response.Status = false;
+                response.Status  = false;
                 response.Message = "No pending turn was found to cancel.";
                 return response;
             }
 
-            turn.Status = TurnStatus.Finished;
+            turn.Status     = TurnStatus.Finished;
             turn.FinishedAt = DateTime.Now;
 
             await _context.SaveChangesAsync();
@@ -251,9 +259,9 @@ namespace BankTurns.Services
             await _historyService.RegisterAsync(turn.Id, null,
                 TurnStatus.Pending, TurnStatus.Finished, "Turn cancelled by user");
 
-            response.Status = true;
+            response.Status  = true;
             response.Message = $"Turn {turn.Ticket} cancelled.";
-            response.Data = turn;
+            response.Data    = turn;
             return response;
         }
 
@@ -267,32 +275,31 @@ namespace BankTurns.Services
 
             if (turn == null)
             {
-                response.Status = false;
+                response.Status  = false;
                 response.Message = "Turn not found.";
                 return response;
             }
 
-            // Position in queue
             int position = await _context.Turns
                 .CountAsync(t => t.Status == TurnStatus.Pending &&
                                  t.CreatedAt <= turn.CreatedAt);
 
             var ticket = new TicketDto
             {
-                TurnId = turn.Id,
-                Ticket = turn.Ticket,
+                TurnId     = turn.Id,
+                Ticket     = turn.Ticket,
                 ClientName = turn.User.Name,
-                Document = turn.User.Document,
-                Reason = turn.User.Reason,
-                Status = turn.Status.ToString(),
-                Position = position,
-                CreatedAt = turn.CreatedAt,
-                IssuedAt = DateTime.Now
+                Document   = turn.User.Document,
+                Reason     = turn.Reason,
+                Status     = turn.Status.ToString(),
+                Position   = position,
+                CreatedAt  = turn.CreatedAt,
+                IssuedAt   = DateTime.Now
             };
 
-            response.Status = true;
+            response.Status  = true;
             response.Message = "Ticket generated successfully.";
-            response.Data = ticket;
+            response.Data    = ticket;
             return response;
         }
     }

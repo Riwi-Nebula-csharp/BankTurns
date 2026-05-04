@@ -4,9 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace BankTurns.Controllers;
 
-[ApiController]
-[Route("api/[controller]")]
-public class AdvisorsController : ControllerBase
+public class AdvisorsController : Controller
 {
     private readonly IAdvisorService _advisorService;
 
@@ -15,31 +13,45 @@ public class AdvisorsController : ControllerBase
         _advisorService = advisorService;
     }
 
+    // POST /Advisors/Create
     [HttpPost]
-    public async Task<IActionResult> Create([FromBody] CreateAdvisorRequest request)
+    public async Task<IActionResult> Create(CreateAdvisorRequest request)
     {
         var response = await _advisorService.CreateAsync(request.Name, request.Email, request.Password);
-        return response.Status ? Ok(response) : BadRequest(response);
+
+        if (!response.Status)
+        {
+            TempData["Error"] = response.Message;
+            return RedirectToAction("Index", "AdvisorPanel");
+        }
+
+        TempData["Success"] = $"Asesor {response.Data?.Name} creado exitosamente.";
+        return RedirectToAction("Index", "AdvisorPanel");
     }
 
-    [HttpPost("login")]
-    public async Task<IActionResult> Login([FromBody] LoginAdvisorRequest request)
+    // POST /Advisors/Login
+    [HttpPost]
+    public async Task<IActionResult> Login(LoginAdvisorRequest request)
     {
         var response = await _advisorService.LoginAsync(request.Email, request.Password);
-        return response.Status ? Ok(response) : Unauthorized(response);
+
+        if (!response.Status || response.Data == null)
+        {
+            TempData["Error"] = response.Message;
+            return RedirectToAction("Index", "AdvisorPanel");
+        }
+
+        HttpContext.Session.SetInt32("AdvisorId",   response.Data.Id);
+        HttpContext.Session.SetString("AdvisorName", response.Data.Name);
+
+        return RedirectToAction("Panel", "AdvisorPanel");
     }
 
-    [HttpGet("active")]
-    public async Task<IActionResult> GetActive()
+    // POST /Advisors/Logout
+    [HttpPost]
+    public IActionResult Logout()
     {
-        var response = await _advisorService.GetAllActiveAsync();
-        return Ok(response);
-    }
-
-    [HttpPatch("{advisorId:int}/toggle-status")]
-    public async Task<IActionResult> ToggleStatus(int advisorId)
-    {
-        var response = await _advisorService.ToggleStatusAsync(advisorId);
-        return response.Status ? Ok(response) : NotFound(response);
+        HttpContext.Session.Clear();
+        return RedirectToAction("Index", "AdvisorPanel");
     }
 }
