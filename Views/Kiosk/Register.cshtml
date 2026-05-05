@@ -3,12 +3,12 @@
     ViewData["FullScreen"] = true;
 }
 
-<div class="kiosk-page">
-    <div class="kiosk-container">
+<div class="kiosk-page kiosk-accessible-page">
+    <div class="kiosk-container kiosk-accessible-container">
 
         <div class="kiosk-logo">
             <div class="bank-icon">🏦</div>
-            <h1 style="font-size:2rem;margin-bottom:6px;">
+            <h1 class="kiosk-accessible-title">
                 <span class="gradient-text">BankTurns</span>
             </h1>
         </div>
@@ -20,12 +20,12 @@
             </div>
         }
 
-        <div class="glass-card" style="padding:32px;">
-            <a href="/Kiosk" class="btn-ghost" style="margin-bottom:16px;padding:6px 12px;font-size:0.8rem;display:inline-block;">
+        <div class="glass-card kiosk-accessible-card">
+            <a href="/Kiosk" class="btn-ghost kiosk-back-link">
                 ← Volver
             </a>
-            <h2 style="font-size:1.3rem;margin-bottom:6px;">Registro de Usuario</h2>
-            <p class="text-secondary-custom" style="font-size:0.9rem;margin-bottom:24px;">
+            <h2 class="kiosk-accessible-heading">Registro de Usuario</h2>
+            <p class="text-secondary-custom kiosk-accessible-help">
                 No encontramos tu documento. Completa tus datos para continuar.
             </p>
 

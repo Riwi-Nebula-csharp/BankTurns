@@ -62,6 +62,20 @@ public class AdvisorPanelController : Controller
         return RedirectToAction(nameof(Panel));
     }
 
+    // POST /AdvisorPanel/RecallCurrent
+    [HttpPost]
+    public async Task<IActionResult> RecallCurrent()
+    {
+        var advisorId = HttpContext.Session.GetInt32("AdvisorId");
+        if (advisorId == null)
+            return RedirectToAction(nameof(Index));
+
+        var response = await _turnService.RecallCurrentAsync(advisorId.Value);
+        TempData[response.Status ? "Success" : "Error"] = response.Message;
+
+        return RedirectToAction(nameof(Panel));
+    }
+
     // POST /AdvisorPanel/FinishTurn
     [HttpPost]
     public async Task<IActionResult> FinishTurn(string? comment)

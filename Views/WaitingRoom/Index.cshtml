@@ -28,12 +28,27 @@
             allowfullscreen
             style="width:100%;height:100%;min-height:calc(100vh - 48px);border:none;">
         </iframe>
+
+        <div id="call-overlay" class="call-overlay" aria-live="assertive" aria-hidden="true">
+            <div class="call-overlay-content">
+                <div class="call-overlay-label">Turno llamado</div>
+                <div id="call-overlay-ticket" class="call-overlay-ticket">—</div>
+                <div id="call-overlay-client" class="call-overlay-client"></div>
+                <div id="call-overlay-window" class="call-overlay-window"></div>
+            </div>
+        </div>
     </div>
 
     <!-- Right: Queue Sidebar -->
     <div class="wr-sidebar" style="position:relative;z-index:1;padding:24px 0;">
 
         <div id="queue-container" style="display:flex;flex-direction:column;gap:20px;height:100%;">
+        <div id="current-call-state"
+             data-ticket="@(inProgress?.Ticket ?? "")"
+             data-client="@(inProgress?.User?.Name ?? "")"
+             data-window="@(inProgress?.AdvisorId?.ToString() ?? "")"
+             data-called-at="@(inProgress?.CalledAt?.ToString("O") ?? "")"
+             hidden></div>
         <!-- Turno en atención -->
         <div class="current-turn-display">
             <p style="font-size:0.78rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-secondary);margin-bottom:10px;">
@@ -104,6 +119,32 @@
     updateClock();
     setInterval(updateClock, 1000);
 
+    const overlay = document.getElementById('call-overlay');
+    const overlayTicket = document.getElementById('call-overlay-ticket');
+    const overlayClient = document.getElementById('call-overlay-client');
+    const overlayWindow = document.getElementById('call-overlay-window');
+    const initialState = document.getElementById('current-call-state');
+    let lastCallStamp = initialState?.dataset.calledAt || '';
+    let overlayTimer = null;
+
+    function showCallOverlay(state) {
+        if (!state?.dataset.calledAt || state.dataset.calledAt === lastCallStamp) return;
+
+        lastCallStamp = state.dataset.calledAt;
+        overlayTicket.textContent = state.dataset.ticket || '—';
+        overlayClient.textContent = state.dataset.client || '';
+        overlayWindow.textContent = state.dataset.window ? `Pase a ventanilla ${state.dataset.window}` : '';
+
+        overlay.classList.add('is-visible');
+        overlay.setAttribute('aria-hidden', 'false');
+
+        clearTimeout(overlayTimer);
+        overlayTimer = setTimeout(() => {
+            overlay.classList.remove('is-visible');
+            overlay.setAttribute('aria-hidden', 'true');
+        }, 4000);
+    }
+
     // Polling without full page reload (keeps video playing)
     setInterval(async () => {
         try {
@@ -115,6 +156,7 @@
                 const newContent = doc.getElementById('queue-container');
                 if (newContent) {
                     document.getElementById('queue-container').innerHTML = newContent.innerHTML;
+                    showCallOverlay(document.getElementById('current-call-state'));
                 }
             }
         } catch (e) {
