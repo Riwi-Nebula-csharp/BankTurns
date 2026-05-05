@@ -1,17 +1,20 @@
 @using BankTurns.Models
 @{
-    ViewData["Title"] = "Panel del Asesor";
+    ViewData["Title"]      = "Panel del Asesor";
     ViewData["FullScreen"] = true;
 
-    var advisorId   = ViewBag.AdvisorId   as int?;
-    var advisorName = ViewBag.AdvisorName as string ?? "Asesor";
-    var queue       = ViewBag.Queue       as List<Turn> ?? new();
+    var advisorId    = ViewBag.AdvisorId   as int?;
+    var advisorName  = ViewBag.AdvisorName as string ?? "Asesor";
+    var queue        = ViewBag.Queue       as List<Turn> ?? new();
     var advisorTurns = ViewBag.AdvisorTurns as List<Turn> ?? new();
-    var activeTurn  = ViewBag.ActiveTurn  as Turn;
+    var activeTurn   = ViewBag.ActiveTurn  as Turn;
 
     var pending    = queue.Where(t => t.Status == TurnStatus.Pending).OrderBy(t => t.CreatedAt).ToList();
     var inProgress = queue.Where(t => t.Status == TurnStatus.InProgress).ToList();
     var finished   = advisorTurns.Where(t => t.Status == TurnStatus.Finished).OrderByDescending(t => t.FinishedAt).ToList();
+
+    var calledTicket = TempData["CalledTicket"] as string;
+    var calledName   = TempData["CalledName"]   as string;
 }
 
 <div class="advisor-layout" style="position:relative;z-index:1;">
@@ -260,6 +263,36 @@
     </div>
 </div>
 
+<!-- ── Pop-up: Turno Llamado ── -->
+@if (!string.IsNullOrEmpty(calledTicket))
+{
+    <div id="call-popup" style="
+        position:fixed;inset:0;z-index:9999;
+        display:flex;align-items:center;justify-content:center;
+        background:rgba(0,0,0,0.55);backdrop-filter:blur(4px);">
+        <div style="
+            background:var(--bg-card);border:1px solid var(--glass-border);
+            border-radius:var(--radius-lg);padding:48px 56px;
+            text-align:center;box-shadow:0 24px 64px rgba(0,0,0,0.4);
+            min-width:340px;">
+            <p style="font-size:0.85rem;text-transform:uppercase;
+                       letter-spacing:0.1em;color:var(--text-secondary);
+                       margin-bottom:12px;">Turno llamado</p>
+            <div style="font-size:4rem;font-weight:800;
+                        color:var(--red-primary);letter-spacing:0.05em;
+                        margin-bottom:8px;">@calledTicket</div>
+            <div style="font-size:1.4rem;font-weight:600;
+                        color:var(--text-primary);margin-bottom:32px;">
+                @calledName
+            </div>
+            <button onclick="document.getElementById('call-popup').style.display='none'"
+                    class="btn-ghost" style="min-width:140px;">
+                Cerrar
+            </button>
+        </div>
+    </div>
+}
+
 @section Scripts {
 <script>
     // Clock
@@ -278,5 +311,32 @@
             btn.classList.toggle('active', (btn.getAttribute('onclick') || '').includes(id));
         });
     };
+
+    // Text-to-Speech al llamar turno
+    (function () {
+        var ticket = "@calledTicket";
+        var name   = "@calledName";
+        if (!ticket) return;
+
+        // Cierra el popup automáticamente después de 6 segundos
+        setTimeout(function () {
+            var popup = document.getElementById('call-popup');
+            if (popup) popup.style.display = 'none';
+        }, 6000);
+
+        // Lee en voz alta
+        if ('speechSynthesis' in window) {
+            var msg = new SpeechSynthesisUtterance(
+                "Turno " + ticket.split('').join(' ') + ". " +
+                name + ", por favor acérquese al asesor."
+            );
+            msg.lang  = 'es-CO';
+            msg.rate  = 0.9;
+            msg.pitch = 1;
+            setTimeout(function () {
+                window.speechSynthesis.speak(msg);
+            }, 400);
+        }
+    })();
 </script>
 }

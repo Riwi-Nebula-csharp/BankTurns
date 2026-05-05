@@ -15,7 +15,6 @@ public class AdvisorPanelController : Controller
     // GET /AdvisorPanel  — login
     public IActionResult Index()
     {
-        // Si ya hay sesión, ir directo al panel
         if (HttpContext.Session.GetInt32("AdvisorId") != null)
             return RedirectToAction(nameof(Panel));
 
@@ -31,19 +30,18 @@ public class AdvisorPanelController : Controller
 
         var advisorName = HttpContext.Session.GetString("AdvisorName");
 
-        // Cola global de turnos (pending + in-progress)
-        var queueResponse    = await _turnService.GetQueueAsync();
-        // Turnos del asesor de hoy (para sección "Atendidos")
-        var advisorResponse  = await _turnService.GetAdvisorTurnsAsync(advisorId.Value);
-        var queueData = queueResponse.Data ?? new();
-        // Turno activo actual del asesor
-        var activeTurn = queueData.FirstOrDefault(t => t.AdvisorId == advisorId.Value && t.Status == BankTurns.Models.TurnStatus.InProgress);
+        var queueResponse   = await _turnService.GetQueueAsync();
+        var advisorResponse = await _turnService.GetAdvisorTurnsAsync(advisorId.Value);
+        var queueData       = queueResponse.Data ?? new();
+        var activeTurn      = queueData.FirstOrDefault(t =>
+            t.AdvisorId == advisorId.Value &&
+            t.Status    == BankTurns.Models.TurnStatus.InProgress);
 
-        ViewBag.AdvisorId   = advisorId.Value;
-        ViewBag.AdvisorName = advisorName;
-        ViewBag.Queue       = queueData;
+        ViewBag.AdvisorId    = advisorId.Value;
+        ViewBag.AdvisorName  = advisorName;
+        ViewBag.Queue        = queueData;
         ViewBag.AdvisorTurns = advisorResponse.Data ?? new();
-        ViewBag.ActiveTurn  = activeTurn;
+        ViewBag.ActiveTurn   = activeTurn;
 
         return View();
     }
@@ -59,6 +57,12 @@ public class AdvisorPanelController : Controller
         var response = await _turnService.CallNextAsync(advisorId.Value);
         TempData[response.Status ? "Success" : "Error"] = response.Message;
 
+        if (response.Status && response.Data != null)
+        {
+            TempData["CalledTicket"] = response.Data.Ticket;
+            TempData["CalledName"]   = response.Data.User?.Name;
+        }
+
         return RedirectToAction(nameof(Panel));
     }
 
@@ -72,6 +76,12 @@ public class AdvisorPanelController : Controller
 
         var response = await _turnService.RecallCurrentAsync(advisorId.Value);
         TempData[response.Status ? "Success" : "Error"] = response.Message;
+
+        if (response.Status && response.Data != null)
+        {
+            TempData["CalledTicket"] = response.Data.Ticket;
+            TempData["CalledName"]   = response.Data.User?.Name;
+        }
 
         return RedirectToAction(nameof(Panel));
     }
