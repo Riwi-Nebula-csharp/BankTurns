@@ -3,8 +3,10 @@ using BankTurns.Response;
 using BankTurns.Models;
 using BankTurns.Data;
 using Microsoft.EntityFrameworkCore;
+using System.Linq;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using System.Globalization;
 
 namespace BankTurns.Services
 {
@@ -49,11 +51,26 @@ namespace BankTurns.Services
                 return response;
             }
 
-            var today = DateTime.UtcNow.Date;
-            var todayCount = await _context.Turns
-                .CountAsync(t => t.CreatedAt >= today);
+            var todayStart = DateTime.Today;
+            var tomorrowStart = todayStart.AddDays(1);
+            var lastTicketToday = await _context.Turns
+                .Where(t => t.CreatedAt >= todayStart && t.CreatedAt < tomorrowStart)
+                .Where(t => t.Ticket != null && t.Ticket.StartsWith("A"))
+                .OrderByDescending(t => t.CreatedAt)
+                .Select(t => t.Ticket)
+                .FirstOrDefaultAsync();
 
-            var ticket = $"A{todayCount + 1:D3}";
+            var nextNumber = 1;
+            if (!string.IsNullOrWhiteSpace(lastTicketToday) && lastTicketToday.Length > 1)
+            {
+                var numericPart = lastTicketToday[1..];
+                if (int.TryParse(numericPart, NumberStyles.None, CultureInfo.InvariantCulture, out var parsed))
+                {
+                    nextNumber = parsed + 1;
+                }
+            }
+
+            var ticket = $"A{nextNumber:D3}";
 
             var turn = new Turn
             {
@@ -83,13 +100,13 @@ namespace BankTurns.Services
         {
             return reason switch
             {
-                BankReason.AccountManagement    => "Everything related to the management of the account",
-                BankReason.Complaints => "Whenever a customer has a complaint regarding our service",
-                BankReason.Deposit   => "A user wants to deposit money to any account",
-                BankReason.Documents => "All documents a customer may need",
-                BankReason.Loan      => "Whenever a customer is requesting a loan",
-                BankReason.Withdraw     => "When withdrawing money",
-                _                         => reason.ToString()
+                BankReason.AccountManagement    => "Gestión de Cuenta",
+                BankReason.Complaints           => "Quejas",
+                BankReason.Deposit              => "Depósito",
+                BankReason.Documents            => "Documentos",
+                BankReason.Loan                 => "Préstamo",
+                BankReason.Withdraw             => "Retiro",
+                _                               => reason.ToString()
             };
         }
 

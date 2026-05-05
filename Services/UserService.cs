@@ -1,4 +1,4 @@
-using BankTurns.Data;
+﻿using BankTurns.Data;
 using BankTurns.Interfaces;
 using BankTurns.Models;
 using BankTurns.Response;
@@ -24,6 +24,13 @@ namespace BankTurns.Services
             {
                 response.Status  = false;
                 response.Message = "Document and name are required";
+                return response;
+            }
+
+            if (!document.All(char.IsDigit))
+            {
+                response.Status  = false;
+                response.Message = "Document can be digits only";
                 return response;
             }
 
