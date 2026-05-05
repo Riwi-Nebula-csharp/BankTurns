@@ -8,6 +8,7 @@ namespace BankTurns.Interfaces
         Task<ServicesResponse<Turn>>       CreateAsync(int userId, BankReason reason);
         Task<ServicesResponse<List<Turn>>> GetQueueAsync();
         Task<ServicesResponse<Turn>>       CallNextAsync(int advisorId);
+        Task<ServicesResponse<Turn>>       RecallCurrentAsync(int advisorId);
         Task<ServicesResponse<Turn>>       FinishTurnAsync(int advisorId, string? comment);
         Task<ServicesResponse<Turn>>       HasActiveTurnAsync(int userId);
         Task<ServicesResponse<List<Turn>>> GetAdvisorTurnsAsync(int advisorId);
