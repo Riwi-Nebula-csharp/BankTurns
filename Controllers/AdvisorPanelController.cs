@@ -1,18 +1,22 @@
+using BankTurns.Hubs;
 using BankTurns.Interfaces;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 
 namespace BankTurns.Controllers;
 
 public class AdvisorPanelController : Controller
 {
-    private readonly ITurnService _turnService;
+    private readonly ITurnService              _turnService;
+    private readonly IHubContext<TurnHub>      _hubContext;
 
-    public AdvisorPanelController(ITurnService turnService)
+    public AdvisorPanelController(ITurnService turnService, IHubContext<TurnHub> hubContext)
     {
         _turnService = turnService;
+        _hubContext  = hubContext;
     }
 
-    // GET /AdvisorPanel  — login
+    // GET /AdvisorPanel
     public IActionResult Index()
     {
         if (HttpContext.Session.GetInt32("AdvisorId") != null)
@@ -28,8 +32,7 @@ public class AdvisorPanelController : Controller
         if (advisorId == null)
             return RedirectToAction(nameof(Index));
 
-        var advisorName = HttpContext.Session.GetString("AdvisorName");
-
+        var advisorName     = HttpContext.Session.GetString("AdvisorName");
         var queueResponse   = await _turnService.GetQueueAsync();
         var advisorResponse = await _turnService.GetAdvisorTurnsAsync(advisorId.Value);
         var queueData       = queueResponse.Data ?? new();
@@ -59,8 +62,11 @@ public class AdvisorPanelController : Controller
 
         if (response.Status && response.Data != null)
         {
-            TempData["CalledTicket"] = response.Data.Ticket;
-            TempData["CalledName"]   = response.Data.User?.Name;
+            // Emitir evento en tiempo real a la sala de espera
+            await _hubContext.Clients.All.SendAsync("TurnCalled",
+                response.Data.Ticket,
+                response.Data.User?.Name,
+                response.Data.AdvisorId?.ToString() ?? "");
         }
 
         return RedirectToAction(nameof(Panel));
@@ -79,8 +85,11 @@ public class AdvisorPanelController : Controller
 
         if (response.Status && response.Data != null)
         {
-            TempData["CalledTicket"] = response.Data.Ticket;
-            TempData["CalledName"]   = response.Data.User?.Name;
+            // Emitir evento en tiempo real a la sala de espera
+            await _hubContext.Clients.All.SendAsync("TurnCalled",
+                response.Data.Ticket,
+                response.Data.User?.Name,
+                response.Data.AdvisorId?.ToString() ?? "");
         }
 
         return RedirectToAction(nameof(Panel));

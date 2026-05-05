@@ -111,7 +111,9 @@
     </div>
 
 @section Scripts {
+<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
 <script>
+    // ── Reloj ──────────────────────────────────────────────
     function updateClock() {
         document.getElementById('clock-display').textContent =
             new Date().toLocaleTimeString('es-CO');
@@ -119,49 +121,56 @@
     updateClock();
     setInterval(updateClock, 1000);
 
-    const overlay = document.getElementById('call-overlay');
+    // ── Overlay ────────────────────────────────────────────
+    const overlay       = document.getElementById('call-overlay');
     const overlayTicket = document.getElementById('call-overlay-ticket');
     const overlayClient = document.getElementById('call-overlay-client');
     const overlayWindow = document.getElementById('call-overlay-window');
-    const initialState = document.getElementById('current-call-state');
-    let lastCallStamp = initialState?.dataset.calledAt || '';
-    let overlayTimer = null;
+    let overlayTimer    = null;
 
-    function showCallOverlay(state) {
-        if (!state?.dataset.calledAt || state.dataset.calledAt === lastCallStamp) return;
+    function speakTurn(ticket, name, windowNum) {
+        if (!('speechSynthesis' in window)) return;
+        window.speechSynthesis.cancel();
 
-        lastCallStamp = state.dataset.calledAt;
-        overlayTicket.textContent = state.dataset.ticket || '—';
-        overlayClient.textContent = state.dataset.client || '';
-        overlayWindow.textContent = state.dataset.window ? `Pase a ventanilla ${state.dataset.window}` : '';
+        var text = "Turno " + ticket.split('').join(' ') + ". " +
+                   name + ", por favor pase a ventanilla " + windowNum + ".";
+
+        var msg   = new SpeechSynthesisUtterance(text);
+        msg.lang   = 'es-CO';
+        msg.rate   = 0.88;
+        msg.pitch  = 1;
+        msg.volume = 1; // máximo volumen del speech
+
+        window.speechSynthesis.speak(msg);
+    }
+
+    function showCallOverlay(ticket, client, windowNum) {
+        overlayTicket.textContent = ticket || '—';
+        overlayClient.textContent = client || '';
+        overlayWindow.textContent = windowNum ? `Pase a ventanilla ${windowNum}` : '';
 
         overlay.classList.add('is-visible');
         overlay.setAttribute('aria-hidden', 'false');
+
+        speakTurn(ticket, client, windowNum);
 
         clearTimeout(overlayTimer);
         overlayTimer = setTimeout(() => {
             overlay.classList.remove('is-visible');
             overlay.setAttribute('aria-hidden', 'true');
-        }, 4000);
+        }, 8000);
     }
 
-    // Polling without full page reload (keeps video playing)
-    setInterval(async () => {
-        try {
-            const res = await fetch(window.location.href);
-            if (res.ok) {
-                const text = await res.text();
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(text, 'text/html');
-                const newContent = doc.getElementById('queue-container');
-                if (newContent) {
-                    document.getElementById('queue-container').innerHTML = newContent.innerHTML;
-                    showCallOverlay(document.getElementById('current-call-state'));
-                }
-            }
-        } catch (e) {
-            console.error('Error updating queue:', e);
-        }
-    }, 3000);
+    // ── SignalR ────────────────────────────────────────────
+    const connection = new signalR.HubConnectionBuilder()
+        .withUrl("/turnHub")
+        .withAutomaticReconnect()
+        .build();
+
+    connection.on("TurnCalled", function (ticket, client, windowNum) {
+        showCallOverlay(ticket, client, windowNum);
+    });
+
+    connection.start().catch(err => console.error("SignalR error:", err));
 </script>
 }
