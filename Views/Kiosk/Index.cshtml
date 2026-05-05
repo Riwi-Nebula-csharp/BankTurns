@@ -3,16 +3,16 @@
     ViewData["FullScreen"] = true;
 }
 
-<div class="kiosk-page">
-    <div class="kiosk-container">
+<div class="kiosk-page kiosk-accessible-page">
+    <div class="kiosk-container kiosk-accessible-container">
 
         <!-- Logo & Header -->
         <div class="kiosk-logo">
             <div class="bank-icon">🏦</div>
-            <h1 style="font-size:2rem;margin-bottom:6px;">
+            <h1 class="kiosk-accessible-title">
                 <span class="gradient-text">BankTurns</span>
             </h1>
-            <p class="text-secondary-custom">Bienvenido — Solicita tu turno de atención</p>
+            <p class="text-secondary-custom kiosk-accessible-subtitle">Bienvenido — Solicita tu turno de atención</p>
         </div>
 
         @if (TempData["Error"] != null)
@@ -22,9 +22,9 @@
             </div>
         }
 
-        <div class="glass-card" style="padding:32px;">
-            <h2 style="font-size:1.3rem;margin-bottom:6px;">Identificación</h2>
-            <p class="text-secondary-custom" style="font-size:0.9rem;margin-bottom:24px;">
+        <div class="glass-card kiosk-accessible-card">
+            <h2 class="kiosk-accessible-heading">Identificación</h2>
+            <p class="text-secondary-custom kiosk-accessible-help">
                 Ingresa tu número de documento para continuar.
             </p>
 
@@ -40,7 +40,7 @@
             </form>
 
             <div class="divider"></div>
-            <p class="text-muted-custom" style="font-size:0.82rem;text-align:center;">
+            <p class="text-muted-custom kiosk-accessible-note">
                 📺 ¿Ya tienes un ticket? Espera en la
                 <a href="/WaitingRoom" style="color:var(--red-primary);text-decoration:none;">Sala de Espera</a>
             </p>

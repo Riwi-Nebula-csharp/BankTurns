@@ -217,6 +217,16 @@ h1, h2, h3, h4, h5 {
 }
 .btn-red:hover { background: var(--red-hover); }
 
+button:disabled,
+.btn-blue:disabled,
+.btn-green:disabled,
+.btn-red:disabled,
+.btn-gold:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+}
+
 .btn-full { width: 100%; }
 
 /* ─── Inputs ────────────────────────────────── */
@@ -347,6 +357,69 @@ textarea.field-input { resize: vertical; min-height: 90px; }
   border: none;
 }
 
+.call-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px;
+  background: rgba(219, 0, 17, 0.96);
+  color: #fff;
+  opacity: 0;
+  visibility: hidden;
+  transform: scale(0.98);
+  transition: opacity 0.18s ease, visibility 0.18s ease, transform 0.18s ease;
+  text-align: center;
+}
+
+.call-overlay.is-visible {
+  opacity: 1;
+  visibility: visible;
+  transform: scale(1);
+}
+
+.call-overlay-content {
+  width: min(900px, 100%);
+}
+
+.call-overlay-label {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: clamp(2rem, 4vw, 4rem);
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.call-overlay-ticket {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: clamp(6rem, 18vw, 15rem);
+  font-weight: 800;
+  line-height: 0.95;
+  margin: 24px 0;
+  color: #fff;
+  text-shadow: 0 10px 30px rgba(0,0,0,0.35);
+}
+
+.call-overlay-client {
+  font-size: clamp(2rem, 5vw, 4.5rem);
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.call-overlay-window {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 28px;
+  padding: 18px 34px;
+  background: #fff;
+  color: var(--red-primary);
+  border-radius: var(--radius-md);
+  font-size: clamp(1.7rem, 3vw, 3rem);
+  font-weight: 800;
+}
+
 .wr-sidebar {
   display: flex; flex-direction: column; gap: 20px;
 }
@@ -468,9 +541,120 @@ textarea.field-input { resize: vertical; min-height: 90px; }
   font-weight: 600;
 }
 
+.advisor-call-button {
+  min-height: 52px;
+  font-size: 1rem;
+  font-weight: 800;
+}
+
 /* ─── Kiosk ─────────────────────────────────── */
 .kiosk-container {
   max-width: 480px; width: 100%; padding: 20px; margin: auto;
+}
+
+.kiosk-accessible-page {
+  align-items: center;
+  padding: 28px;
+}
+
+.kiosk-accessible-container {
+  max-width: 760px;
+}
+
+.kiosk-accessible-card {
+  padding: 48px;
+}
+
+.kiosk-accessible-title {
+  font-size: 3rem;
+  margin-bottom: 10px;
+}
+
+.kiosk-accessible-subtitle {
+  font-size: 1.35rem;
+  font-weight: 700;
+}
+
+.kiosk-accessible-heading {
+  font-size: 2.2rem;
+  margin-bottom: 10px;
+}
+
+.kiosk-accessible-help {
+  font-size: 1.35rem;
+  margin-bottom: 32px;
+  font-weight: 600;
+}
+
+.kiosk-accessible-note {
+  font-size: 1.15rem;
+  text-align: center;
+  font-weight: 700;
+}
+
+.kiosk-accessible-page .bank-icon {
+  width: 88px;
+  height: 88px;
+  font-size: 2.6rem;
+}
+
+.kiosk-accessible-page .field-group {
+  gap: 12px;
+  margin-bottom: 26px;
+}
+
+.kiosk-accessible-page .field-label {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.kiosk-accessible-page .field-input {
+  min-height: 72px;
+  font-size: 1.6rem;
+  font-weight: 700;
+  padding: 18px 22px;
+  border-width: 2px;
+}
+
+.kiosk-accessible-page .btn-gold,
+.kiosk-accessible-page .btn-blue,
+.kiosk-accessible-page .btn-ghost {
+  min-height: 72px;
+  font-size: 1.35rem;
+  font-weight: 800;
+  padding: 18px 28px;
+}
+
+.kiosk-back-link {
+  margin-bottom: 22px;
+}
+
+@media (max-width: 640px) {
+  .kiosk-accessible-page {
+    padding: 16px;
+  }
+
+  .kiosk-accessible-container {
+    padding: 0;
+  }
+
+  .kiosk-accessible-card {
+    padding: 28px;
+  }
+
+  .kiosk-accessible-title {
+    font-size: 2.4rem;
+  }
+
+  .kiosk-accessible-heading {
+    font-size: 1.8rem;
+  }
+
+  .kiosk-accessible-help,
+  .kiosk-accessible-subtitle {
+    font-size: 1.15rem;
+  }
 }
 
 .kiosk-logo {

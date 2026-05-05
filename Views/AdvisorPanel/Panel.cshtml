@@ -114,12 +114,17 @@
             </div>
             <div style="display:flex;gap:10px;flex-wrap:wrap;">
                 <form asp-controller="AdvisorPanel" asp-action="CallNext" method="post" style="display:inline;">
-                    <button type="submit" class="btn-blue">
+                    <button type="submit" class="btn-blue advisor-call-button" @(activeTurn != null ? "disabled" : "")>
                         📣 Llamar Siguiente
                     </button>
                 </form>
                 @if (activeTurn != null)
                 {
+                    <form asp-controller="AdvisorPanel" asp-action="RecallCurrent" method="post" style="display:inline;">
+                        <button type="submit" class="btn-red advisor-call-button">
+                            📢 Llamar Actual
+                        </button>
+                    </form>
                     <button type="button" class="btn-green" onclick="document.getElementById('finish-modal').style.display='flex'">
                         ✓ Finalizar Turno
                     </button>

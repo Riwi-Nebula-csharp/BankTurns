@@ -116,6 +116,7 @@ namespace BankTurns.Services
 
             var queue = await _context.Turns
                 .Include(t => t.User)
+                .Include(t => t.Advisor)
                 .Where(t => t.Status == TurnStatus.Pending || t.Status == TurnStatus.InProgress)
                 .OrderBy(t => t.CreatedAt)
                 .ToListAsync();
@@ -176,6 +177,44 @@ namespace BankTurns.Services
             response.Status  = true;
             response.Message = $"Turn {next.Ticket} called. Client: {next.User.Name}.";
             response.Data    = next;
+            return response;
+        }
+
+        public async Task<ServicesResponse<Turn>> RecallCurrentAsync(int advisorId)
+        {
+            var response = new ServicesResponse<Turn>();
+
+            var advisor = await _context.Advisors.FindAsync(advisorId);
+            if (advisor == null || advisor.Status == AdvisorStatus.Inactive)
+            {
+                response.Status  = false;
+                response.Message = "Advisor not found or inactive.";
+                return response;
+            }
+
+            var turn = await _context.Turns
+                .Include(t => t.User)
+                .Include(t => t.Advisor)
+                .FirstOrDefaultAsync(t => t.AdvisorId == advisorId &&
+                                          t.Status == TurnStatus.InProgress);
+
+            if (turn == null)
+            {
+                response.Status  = false;
+                response.Message = "No turn in progress was found for this advisor.";
+                return response;
+            }
+
+            turn.CalledAt = DateTime.Now;
+            await _context.SaveChangesAsync();
+
+            await _historyService.RegisterAsync(turn.Id, advisorId,
+                TurnStatus.InProgress, TurnStatus.InProgress,
+                $"Turn recalled by advisor {advisor.Name}");
+
+            response.Status  = true;
+            response.Message = $"Turn {turn.Ticket} called again. Client: {turn.User.Name}.";
+            response.Data    = turn;
             return response;
         }
 
