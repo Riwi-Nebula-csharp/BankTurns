@@ -1,0 +1,50 @@
+@{
+    ViewData["Title"] = "Solicitar Turno";
+    ViewData["FullScreen"] = true;
+}
+
+<div class="kiosk-page">
+    <div class="kiosk-container">
+
+        <!-- Logo & Header -->
+        <div class="kiosk-logo">
+            <div class="bank-icon">🏦</div>
+            <h1 style="font-size:2rem;margin-bottom:6px;">
+                <span class="gradient-text">BankTurns</span>
+            </h1>
+            <p class="text-secondary-custom">Bienvenido — Solicita tu turno de atención</p>
+        </div>
+
+        @if (TempData["Error"] != null)
+        {
+            <div class="glass-card" style="padding:12px 20px;border-left:3px solid #e74c3c;margin-bottom:16px;">
+                <p style="color:#e74c3c;font-size:0.9rem;">@TempData["Error"]</p>
+            </div>
+        }
+
+        <div class="glass-card" style="padding:32px;">
+            <h2 style="font-size:1.3rem;margin-bottom:6px;">Identificación</h2>
+            <p class="text-secondary-custom" style="font-size:0.9rem;margin-bottom:24px;">
+                Ingresa tu número de documento para continuar.
+            </p>
+
+            <form asp-controller="Kiosk" asp-action="CheckDocument" method="post" class="form-section">
+                <div class="field-group">
+                    <label class="field-label" for="document">Número de documento</label>
+                    <input id="document" name="document" class="field-input" type="text"
+                           placeholder="Ej: 1001234567" autocomplete="off" maxlength="20" required />
+                </div>
+                <button type="submit" class="btn-gold btn-full">
+                    Continuar <span>→</span>
+                </button>
+            </form>
+
+            <div class="divider"></div>
+            <p class="text-muted-custom" style="font-size:0.82rem;text-align:center;">
+                📺 ¿Ya tienes un ticket? Espera en la
+                <a href="/WaitingRoom" style="color:var(--red-primary);text-decoration:none;">Sala de Espera</a>
+            </p>
+        </div>
+
+    </div>
+</div>

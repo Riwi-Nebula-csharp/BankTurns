@@ -1,0 +1,125 @@
+@using BankTurns.Models 
+@{
+    ViewData["Title"] = "Sala de Espera";
+    ViewData["FullScreen"] = true;
+
+    var inProgress = ViewBag.InProgressTurn as Turn;
+    var pending    = ViewBag.PendingQueue   as List<Turn> ?? new();
+}
+
+<div class="wr-layout" style="position:relative;z-index:1;">
+
+    <!-- Left: Video Panel -->
+    <div class="wr-video-panel">
+        <div style="position:absolute;top:0;left:0;right:0;z-index:10;padding:18px 24px;display:flex;align-items:center;justify-content:space-between;background:linear-gradient(180deg,rgba(0,0,0,0.7),transparent);">
+            <div style="display:flex;align-items:center;gap:12px;">
+                <div class="bank-icon" style="width:40px;height:40px;font-size:1.2rem;display:flex;align-items:center;justify-content:center;background:var(--red-primary);border-radius:50%;color:white;">🏦</div>
+                <div>
+                    <div style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:1.1rem;color:white;">BankTurns</div>
+                    <div style="font-size:0.75rem;color:rgba(255,255,255,0.8);">Sala de Espera</div>
+                </div>
+            </div>
+            <div class="clock" style="color:white;" id="clock-display">00:00:00</div>
+        </div>
+
+        <iframe
+            src="https://www.youtube.com/embed/jsiE3gY9vR4?start=22&autoplay=1&mute=0&loop=1&playlist=jsiE3gY9vR4&controls=0&rel=0"
+            allow="autoplay; encrypted-media"
+            allowfullscreen
+            style="width:100%;height:100%;min-height:calc(100vh - 48px);border:none;">
+        </iframe>
+    </div>
+
+    <!-- Right: Queue Sidebar -->
+    <div class="wr-sidebar" style="position:relative;z-index:1;padding:24px 0;">
+
+        <div id="queue-container" style="display:flex;flex-direction:column;gap:20px;height:100%;">
+        <!-- Turno en atención -->
+        <div class="current-turn-display">
+            <p style="font-size:0.78rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-secondary);margin-bottom:10px;">
+                ⚡ Turno en Atención
+            </p>
+            <div class="pulse-ring">
+                <div class="turn-number">@(inProgress?.Ticket ?? "—")</div>
+            </div>
+            @if (inProgress != null)
+            {
+                <p style="margin-top:12px;font-size:1rem;font-weight:600;color:var(--text-primary);">
+                    @inProgress.User?.Name
+                </p>
+                <p style="margin-top:4px;font-size:0.85rem;color:var(--text-secondary);">
+                    🪟 Ventanilla @inProgress.AdvisorId
+                </p>
+            }
+        </div>
+
+        <!-- Lista de cola -->
+        <div class="glass-card" style="padding:20px;flex:1;overflow:hidden;display:flex;flex-direction:column;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+                <h2 style="font-size:1rem;font-weight:600;">En Cola de Espera</h2>
+                <span class="badge badge-pending">@pending.Count esperando</span>
+            </div>
+            <div class="queue-list" style="overflow-y:auto;flex:1;">
+                @if (!pending.Any())
+                {
+                    <div class="queue-empty">
+                        <p style="font-size:2rem;margin-bottom:8px;">☕</p>
+                        <p>Sin turnos en espera</p>
+                    </div>
+                }
+                @foreach (var (turn, i) in pending.Select((t, i) => (t, i)))
+                {
+                    <div class="queue-item">
+                        <div class="queue-item-ticket">@turn.Ticket</div>
+                        <div class="queue-item-info">
+                            <div class="queue-item-name">@turn.User?.Name</div>
+                            <div class="queue-item-reason">@turn.Reason</div>
+                        </div>
+                        <span class="badge badge-pending">#@(i + 1)</span>
+                    </div>
+                }
+            </div>
+        </div>
+        </div>
+
+        <!-- Footer nav -->
+        <div style="display:flex;gap:10px;padding:0 0 8px;">
+            <a href="/Kiosk" class="btn-gold" style="flex:1;justify-content:center;text-decoration:none;font-size:0.88rem;padding:12px;">
+                🎫 Tomar Turno
+            </a>
+            <a href="/AdvisorPanel" class="btn-ghost" style="flex:1;justify-content:center;text-decoration:none;font-size:0.88rem;">
+                👤 Asesor
+            </a>
+        </div>
+
+        </div>
+    </div>
+
+@section Scripts {
+<script>
+    function updateClock() {
+        document.getElementById('clock-display').textContent =
+            new Date().toLocaleTimeString('es-CO');
+    }
+    updateClock();
+    setInterval(updateClock, 1000);
+
+    // Polling without full page reload (keeps video playing)
+    setInterval(async () => {
+        try {
+            const res = await fetch(window.location.href);
+            if (res.ok) {
+                const text = await res.text();
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(text, 'text/html');
+                const newContent = doc.getElementById('queue-container');
+                if (newContent) {
+                    document.getElementById('queue-container').innerHTML = newContent.innerHTML;
+                }
+            }
+        } catch (e) {
+            console.error('Error updating queue:', e);
+        }
+    }, 3000);
+</script>
+}
