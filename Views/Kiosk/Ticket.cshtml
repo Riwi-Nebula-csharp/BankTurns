@@ -1,0 +1,48 @@
+@model BankTurns.Models.TicketDto
+@{
+    ViewData["Title"] = "Tu Turno";
+    ViewData["FullScreen"] = true;
+}
+
+<div class="kiosk-page">
+    <div class="kiosk-container">
+
+        <div class="ticket-card" style="padding:32px;">
+            <h2 style="font-size:1.4rem;text-transform:uppercase;text-align:center;margin-bottom:4px;font-weight:800;letter-spacing:1px;">
+                Banco BankTurns
+            </h2>
+            <p style="font-size:0.8rem;text-align:center;border-bottom:1px dashed var(--text-muted);padding-bottom:12px;margin-bottom:12px;color:var(--text-secondary);">
+                Fecha: @Model.IssuedAt.ToString("dd/MM/yyyy")<br/>
+                Hora: @Model.IssuedAt.ToString("hh:mm tt")
+            </p>
+            
+            <p style="font-size:0.9rem;text-align:center;margin-bottom:4px;color:var(--text-secondary);">Turno Asignado</p>
+            <div class="turn-number" style="text-align:center;line-height:1;">@Model.Ticket</div>
+            
+            <div style="margin-top:16px;border-top:1px dashed var(--text-muted);padding-top:12px;text-align:center;">
+                <p style="font-size:1rem;font-weight:700;">@Model.ClientName</p>
+                <p style="font-size:0.85rem;margin-top:4px;color:var(--text-secondary);">📋 @Model.Reason</p>
+            </div>
+            
+            <div style="margin-top:16px;text-align:center;">
+                <p style="font-size:0.9rem;font-weight:600;">¡Por favor espera tu llamado en la sala!</p>
+            </div>
+
+            <div style="margin-top:16px;padding:12px;background:var(--green-dim);border-radius:var(--radius-sm);border:1px solid #bbf7d0;">
+                <p style="font-size:0.85rem;color:var(--green);text-align:center;font-weight:600;">
+                    🖨️ Tu ticket se ha impreso automáticamente. Recógelo de la impresora.
+                </p>
+            </div>
+        </div>
+
+        <div style="display:flex;gap:12px;margin-top:24px;">
+            <a href="/WaitingRoom" class="btn-blue" style="flex:1;justify-content:center;text-decoration:none;">
+                📺 Ir a Sala de Espera
+            </a>
+            <a href="/Kiosk" class="btn-ghost" style="flex:1;text-align:center;text-decoration:none;">
+                + Nuevo Turno
+            </a>
+        </div>
+
+    </div>
+</div>

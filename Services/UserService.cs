@@ -14,17 +14,23 @@ namespace BankTurns.Services
         {
             _context = context;
         }
-        
-        public async Task<ServicesResponse<User?>> CreateAsync(string document, string name, string reason)
+
+        public async Task<ServicesResponse<User?>> CreateAsync(string document, string name)
         {
             var response = new ServicesResponse<User?>();
 
             if (string.IsNullOrWhiteSpace(document) ||
-                string.IsNullOrWhiteSpace(name)     ||
-                string.IsNullOrWhiteSpace(reason))
+                string.IsNullOrWhiteSpace(name))
             {
                 response.Status  = false;
-                response.Message = "Document,name and reason are required";
+                response.Message = "Document and name are required";
+                return response;
+            }
+
+            if (!document.All(char.IsDigit))
+            {
+                response.Status  = false;
+                response.Message = "Document can be digits only";
                 return response;
             }
 
@@ -33,8 +39,7 @@ namespace BankTurns.Services
 
             if (existing != null)
             {
-                existing.Name   = name;
-                existing.Reason = reason;
+                existing.Name = name;
                 await _context.SaveChangesAsync();
 
                 response.Status  = true;
@@ -47,7 +52,6 @@ namespace BankTurns.Services
             {
                 Document  = document,
                 Name      = name,
-                Reason    = reason,
                 CreatedAt = DateTime.Now
             };
 
@@ -55,7 +59,7 @@ namespace BankTurns.Services
             await _context.SaveChangesAsync();
 
             response.Status  = true;
-            response.Message = $"User {name} register successfully.";
+            response.Message = $"User {name} registered successfully.";
             response.Data    = user;
             return response;
         }
@@ -70,7 +74,7 @@ namespace BankTurns.Services
             if (user == null)
             {
                 response.Status  = false;
-                response.Message = "User no found";
+                response.Message = "User not found";
                 return response;
             }
 
